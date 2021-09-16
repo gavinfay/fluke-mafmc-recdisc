@@ -1,0 +1,70 @@
+```{r}
+wave_seasons <- data.frame(seas = seq(60,300,15),
+                           w2 = c(rep(0,9),seq(15,60,15),rep(60,4)),
+                           w3 = c(rep(0,1),seq(15,60,15),rep(60,12)),
+                           w4 = rep(60,17),
+                           w5 = c(rep(0,5),seq(15,60,15),rep(60,8)),
+                           w6 = c(rep(0,13),seq(15,60,15)))
+tail(wave_seasons)
+
+get_days <- function(seas,w2,w3,w4,w5,w6) {
+days <- tibble(day = 1:365,
+               open = c(rep(0,65),rep(0,60-w2),rep(1,w2),
+                        rep(0,60-w3),rep(1,w3),
+                        rep(NA,60),
+                        #rep(0,60-w3),rep(1,w3),
+                        rep(1,w5),rep(0,60-w5),
+                        rep(1,w6),rep(0,60-w6)))
+return(days)
+}
+#purrr::pmap(tail(wave_seasons,1),list(w2=w2,w3=w3,w4=w4,w5=w5,w6=w6),get_days)
+new_regs <- c(5,21,150)
+x <- filter(wave_seasons, seas == new_regs[3])
+out <- get_days(w2=x$w2,w3=x$w3,w4=x$w4,w5=x$w5,w6=x$w6) %>% 
+  mutate(bag = ifelse(open==1, new_regs[1], 0),
+         minlen = ifelse(open==1, new_regs[2], 50)) %>% 
+  I()
+states <- c("MA", "RI", "CT", "NY", "NJ", "DE", "MD", "VA", "NC")
+output_regs <- tibble(states=states,
+       out = rep(list(out),length(states))) %>% 
+  unnest(cols = c(out)) %>% 
+  I()
+output_regs
+```
+
+```{r}
+library(lubridate)
+#read clipboard
+#reg_table <- clipr::read_clip_tbl()
+#saveRDS(reg_table,file="fluke-regs-2019.rds")
+regs2019 <- readRDS("fluke-regs-2019.rds") %>% 
+  mutate(year = rep(2019,nrow(.))) %>%  
+  separate(Dates, sep ="-", into = c("start","end")) %>% 
+  unite(col = "start", year, start, sep = " ", remove = FALSE) %>% 
+  unite(col = "end", year, end, sep = " ") %>% 
+  mutate(start = yday(parse_date_time(start, "%y%m%d")),
+         end = yday(parse_date_time(end, "%y%m%d")),
+         day = map2(start,end,function(x,y){seq(x,y,by=1)}),
+         states = State
+         ) %>% 
+  select(states,Period,day) %>% 
+  unnest(cols = c(day)) %>% 
+  I()
+regs2019
+#as_date(reg_table$Dates)
+```
+
+```{r}
+lou_regs <- output_regs %>% 
+  left_join(regs2019) %>% 
+  na.omit() %>% 
+  group_by(states, Period) %>% 
+  summarize(prop = round(sum(open, na.rm=TRUE)/length(open), digits = 3), .groups = "drop") %>% 
+  mutate(bag = ifelse(prop>0, new_regs[1], 0),
+         minlen = ifelse(prop>0, new_regs[2], 50)) %>% 
+  I()
+lou_regs
+write_csv(lou_regs,"mgmt-period-regs.csv")
+```
+
+
