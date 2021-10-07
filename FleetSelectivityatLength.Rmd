@@ -2,16 +2,20 @@
 title: "Fleet Selectivity at Length"
 author: "Sarah Gaichas"
 date: "10/7/2021"
-output: html_document
+output: 
+  html_document:
+    code_fold: hide
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
 ```
 
 ## Convert assessment selectivity at age to selectivity at length
 
-Mark Terciero sent the survey length weight equation parameters, selectivity info from the 2021 Summer flounder management track assessment model (ASAP), and conversions to mean length at age (file in this directory: `Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx`.
+Mark Terciero sent the survey length weight equation parameters, selectivity info from the 2021 Summer flounder management track assessment model (ASAP), and conversions to mean length at age (file in this directory: `Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx`).
 
 >Attached is a spreadsheet with the NEFSC SV L-W equation (cm and kg) and the selectivity information from the 2021 MTA ASAP run (F2021_2019_V1.DAT).
 >
@@ -25,8 +29,8 @@ E.g., for the Comm Land at age 4 = selex = 1.00, xwkg = 0.972, xlcm = 45.5, and 
 Read in the fleet specific age based selectivities, average weight at age, and length-weight equation parameters from the sheet:
 
 ```{r}
+library(tidyverse)
 library(readxl)
-library(magrittr)
 
 # from https://github.com/tidyverse/readxl/issues/486#issuecomment-398224438
 read_excel_multiline <- function(filename, row_collapse = 1, ...) {
@@ -67,6 +71,38 @@ Get mean length at age from weights at age for each fleet and align with age spe
 
 ```{r}
 
+fleetwtage <- fleetavgwtage %>%
+  dplyr::rename_all(make.names) %>%
+  dplyr::select(Age = 'Comm.Land_Age', matches('XWkg'))
+  
+# could also join with a more general survey average wt at age instead
+# or back out from age-length relationship
+# using assessment avgwtage by fleet for now
+
+fleetselex <- fleetageselex %>%
+  dplyr::rename_all(make.names) %>%
+  dplyr::select(Age = 'Comm.Land_Age', matches('Selex')) %>%
+  dplyr::left_join(fleetwtage) %>%
+  tidyr::pivot_longer(
+    cols = -Age,
+    names_to = c("Fleet", "Variable"),
+    names_sep = "_",
+    values_to = "Value"
+  ) %>%
+  tidyr::pivot_wider(names_from = "Variable", 
+                     values_from = "Value") %>%
+  dplyr::mutate(XLcm = exp((log(XWkg)-log(lenwt_a))/lenwt_b))
+  
+  
+ggplot2::ggplot(fleetselex, aes(x=XLcm, y=Selex.prop.)) + 
+  geom_point() + 
+  facet_grid(~Fleet) + 
+  xlab("mean length (cm)") +
+  ylab("proportion selected")
+
+
 ```
 
+Sinatra is using 2 cm length bins from (lower limit) 10 to 92 cm.
 
+I think we will need to make a decision about the extent of domed selectivity for the larger sizes if we fit a function to this, or we can just do linear interpolation and hold the ends steady since it is an input vector of starting values rather than a set of function parameters.
