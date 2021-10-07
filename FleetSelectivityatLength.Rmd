@@ -1,0 +1,72 @@
+---
+title: "Fleet Selectivity at Length"
+author: "Sarah Gaichas"
+date: "10/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Convert assessment selectivity at age to selectivity at length
+
+Mark Terciero sent the survey length weight equation parameters, selectivity info from the 2021 Summer flounder management track assessment model (ASAP), and conversions to mean length at age (file in this directory: `Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx`.
+
+>Attached is a spreadsheet with the NEFSC SV L-W equation (cm and kg) and the selectivity information from the 2021 MTA ASAP run (F2021_2019_V1.DAT).
+>
+>I dug out the estimated selectivities by fleet for the last time block (2008-2019) from the ASAP run, and compiled the average mean weights at age for the last 5 years.  I then used the L-W equation to calculate the associated mean lengths at age.  All of this is in the Fleet Selex tab.
+>
+>So - you have the selex at age by fleet and the associated mean weights and lengths at age, effectively giving the fleet selex at the fleet mean lengths.
+E.g., for the Comm Land at age 4 = selex = 1.00, xwkg = 0.972, xlcm = 45.5, and so on...
+>
+>You/Gavin can now fit logistics, double logistics, or whatever else to get selex function at length for the four fleets.
+
+Read in the fleet specific age based selectivities, average weight at age, and length-weight equation parameters from the sheet:
+
+```{r}
+library(readxl)
+library(magrittr)
+
+# from https://github.com/tidyverse/readxl/issues/486#issuecomment-398224438
+read_excel_multiline <- function(filename, row_collapse = 1, ...) {
+  nms <- read_excel(filename, range = cell_rows(seq_len(row_collapse)), col_names = F)  
+  nms <- lapply(nms, na.omit)
+  nms <- lapply(nms, paste, collapse = "_")
+
+  read_excel(filename, skip = row_collapse, col_names = unlist(nms), ...)                                     
+}
+
+# can't use the function on subsets of the sheet easily so just hardcode for sheet sections
+fleetageselex.names <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A3:H4", col_names = F)
+fleetageselex.names <- lapply(fleetageselex.names, na.omit)
+fleetageselex.names <- lapply(fleetageselex.names, paste, collapse = "_")
+
+fleetageselex <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A5:H12", col_names = unlist(fleetageselex.names))
+
+fleetavgwtage.names <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A14:H15", col_names = F)
+fleetavgwtage.names <- lapply(fleetavgwtage.names, na.omit)
+fleetavgwtage.names <- lapply(fleetavgwtage.names, paste, collapse = "_")
+  
+fleetavgwtage <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A16:H23", col_names = unlist(fleetavgwtage.names))
+
+# W (kg) = a*L(cm)^b
+lenwt_a <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", 
+                      sheet = "Fleet Selex", 
+                      range = "J13",
+                      col_names=FALSE)[[1]]
+lenwt_b <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", 
+                      sheet = "Fleet Selex", 
+                      range = "K13",
+                      col_names=FALSE)[[1]]
+
+
+```
+
+Get mean length at age from weights at age for each fleet and align with age specific selectivities:
+
+```{r}
+
+```
+
+
