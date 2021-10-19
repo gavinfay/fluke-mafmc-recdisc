@@ -73,8 +73,8 @@
 0.1349	0.3188	0.5747	0.805	1.0652	1.3858	1.6724	2.0643
 0.1349	0.3188	0.5747	0.805	1.0652	1.3858	1.6724	2.0643
 #W@L Pars (alpha & beta) by stock and sex
-0.00000244  3.34694
-0.00000244  3.34694
+0.00000355809 3.278  #0.00000244  3.34694
+0.00000355809 3.278  #0.00000244  3.34694
 #SSB definiftion / Fecundity type, maximum fecundity (1=Biomass, 2 = max fecundity), 2nd number is max number of offspring (used when FecType = 2)
 1 100
 #Fecundity at Age by stock
