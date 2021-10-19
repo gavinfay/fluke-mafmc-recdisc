@@ -107,7 +107,7 @@ Sinatra is using 2 cm length bins from (lower limit) 10 to 92 cm.
 
 I think we will need to make a decision about the extent of domed selectivity for the larger sizes if we fit a function to this, or we can just do linear interpolation and hold the ends steady since it is an input vector of starting values rather than a set of function parameters.
 
-Import things from the ASAP dat file for Sinatra using a handy function [`wham::read_asa3_dat()`](https://github.com/timjmiller/wham/blob/master/R/read_asap3_dat.R):
+Import things from the ASAP dat file for Sinatra using a handy function [`wham::read_asap3_dat()`](https://github.com/timjmiller/wham/blob/master/R/read_asap3_dat.R):
 ```{r}
 #library(r4ss)
 #devtools::install_github("timjmiller/wham") #WHAM install failing
@@ -272,9 +272,109 @@ asapinput <- read_asap3_dat("benchmark_files/F2021_2019_V1_MCMC.dat")
 
 ASAP has annual weight at age for different fleets and indices, but the Sinatra input is mean weight at age at the beginning of the year and mid year (presumably in the population).
 
-I've replaced the Sinatra L-W equation parameters at lines 76-77 with those received from Mark:
-lenwt_a `r lenwt_a`
-lenwt_b `r lenwt_b`
+I've replaced the Sinatra L-W equation parameters at lines 76-77 with those received from Mark: 
+
+*  lenwt_a `r lenwt_a`
+*  lenwt_b `r lenwt_b`
 
 We could just use the L-W equation parameters to translate Sinatra mean length at age to mean weight at age for compatibility. 
 
+```{r}
+
+# from Sinatra.CTL lines 54-55
+meanlenage.fem <- c(6.9371,	19.0716,	29.2072,	37.6731,	44.7444,	50.6509,	55.5844,	59.7052)
+meanlenage.male <- c(5.4998,	15.1201,	23.1556,	29.8674,	35.4736,	40.1562,	44.0676,	47.3345)
+age <- c(0:7)
+
+#from Sinatra.CTL lines 62-63
+sdlenage.fem <- c(0.6937,	1.9072,	2.9207,	3.7673,	4.4744,	5.0651,	5.5584,	5.9705)
+sdlenage.male <- c(0.5500,	1.5120,	2.3156,	2.9867,	3.5474,	4.0156,	4.4068,	4.7335)
+
+
+meanwtage.fem <- lenwt_a*(meanlenage.fem)^lenwt_b
+meanwtage.male <- lenwt_a*(meanlenage.male)^lenwt_b
+```
+
+Replaced at Sinatra.CTL lines 70-71 and 73-74:
+
+*  meanwtage.fem  `r meanwtage.fem`
+*  meanwtage.male  `r meanwtage.male`
+
+At present no way to distinguish begin year and mid year weight at age.
+
+Could also use Sinatra.CTL vonB parameters if they are correct for summer flounder to get selectivity at length from selectivity at age. Plot shows points for mean length at age input at lines 54-55, solid lines estimated length at age from the vonB parameters input at lines 56-57, and dotted lines are +2 std length for females and -2std length for males:
+
+```{r}
+
+# from Sinatra.CTL lines 56-57
+#growth parameters, Linfin,K,tzero by stock and sex
+growth.fem <- data.frame(vbLinf = 80.6, vbK = 0.18, vbt0 =	-0.1)
+growth.male <- data.frame(vbLinf = 63.9, vbK = 0.18, vbt0 =	-0.1)
+
+vb.fem <- growth.fem$vbLinf*(1-exp(-growth.fem$vbK*(age-growth.fem$vbt0)))
+vb.male <- growth.male$vbLinf*(1-exp(-growth.male$vbK*(age-growth.male$vbt0)))
+
+#plot to check
+plot(age, meanlenage.fem, ylim=c(0,90))
+points(age, meanlenage.male)
+lines(age, vb.fem)
+lines(age, vb.male)
+lines(age, (meanlenage.fem + 2*sdlenage.fem), lty="dotted")
+lines(age, (meanlenage.male - 2*sdlenage.male), lty="dotted")
+
+```
+VonB parameters are a bit lower length at age than the input vector but close. We'll use the input vector of mean length at age to translate selectivity at age to selectivity at length. Lines are from average length at age if fleets were really age selective... but they aren't. Length from average weight at age from the fishery (points) is showing that only the larger fish at young ages are selected.
+
+```{r}
+
+meanlenage <- data.frame(
+  bind_cols(age = age, 
+            lenfem = meanlenage.fem, 
+            lenmale = meanlenage.male)
+) %>%
+  dplyr::mutate(Age = case_when(age==7 ~ "7+",
+                          TRUE ~ as.character(age)))
+
+fleetselex2 <- fleetselex %>%
+  left_join(meanlenage)
+  
+
+ggplot2::ggplot(fleetselex2, aes(x=XLcm, y=Selex.prop.)) + 
+  geom_point() + 
+  geom_line(aes(x=lenfem, y=Selex.prop.)) +
+  facet_grid(~Fleet) +
+  xlab("mean length (cm)") +
+  ylab("proportion selected")
+  
+  
+```
+
+Fitting a curve to these:
+
+```{r}
+
+#devtools::install_github("duplisea/dublogistic")
+#library(dublogistic)
+#see end of readme https://github.com/duplisea/dublogistic
+#https://peerj.com/articles/4251/
+library(sicegar)
+
+s.input <- fleetselex2 %>%
+  group_by(Fleet) %>%
+  group_split()
+
+i <- 1
+fleetinput <- data.frame(time=s.input[[i]]$XLcm, intensity=s.input[[i]]$Selex.prop.)
+
+fit.obj <- fitAndCategorize(fleetinput,
+                            threshold_minimum_for_intensity_maximum = 0.3,
+                            threshold_intensity_range = 0.1, 
+                            threshold_t0_max_int = 0.05)
+
+
+
+
+
+
+```
+ 
