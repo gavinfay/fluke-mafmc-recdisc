@@ -372,14 +372,15 @@ fitsel <- function(dat){
   # 1 and 3 are discards and should be doubleSigmoidal 
   # 2 and 4 are landings and should be sigmoidal/flat topped at 1 for larger fish
   
-  sicegar.fit <- figureModelCurves(dataInput = fit.obj$normalizedInput,
-                                   doubleSigmoidalFitVector= fit.obj$doubleSigmoidalModel, #1&3
-                                   sigmoidalFitVector= fit.obj$sigmoidalModel, #2&4
-                                   showParameterRelatedLines = TRUE)
-  
+    sicegar.fit <- figureModelCurves(dataInput = fit.obj$normalizedInput,
+                                     sigmoidalFitVector= fit.obj$sigmoidalModel, #2&4
+                                     doubleSigmoidalFitVector= fit.obj$doubleSigmoidalModel, #1&3
+                                     showParameterRelatedLines = TRUE)
+    
   sicegar.fit$labels$y=paste(unique(dat[,1]), "Selectvity")
   sicegar.fit$labels$x="Length (cm)"
   plot(sicegar.fit)
+  
 }
 
 selplot <- fleetselex2 %>%
