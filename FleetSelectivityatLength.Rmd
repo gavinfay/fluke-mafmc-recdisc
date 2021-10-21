@@ -406,37 +406,128 @@ selplot <- fleetselex2 %>%
 
 ```
 
-Vectors for Sinatra.CTL from fits  
+Vectors for Sinatra.CTL from fits using sicegar estimates and functions. I've modified the fits to be forced to a maximum selectivity of 1 and for discard fleets have forced domes that descend to 0 selection for larger sizes. Otherwise the model fit estimates some constant selection of these larger sizes in discards, which I don't think we want.  I've also reduced the descending slope for commercial discards because it seemed too severe for the few observations of larger but still discarded fish. 
 
 ```{r}
 
 lenbin.lower <- seq(10, 92, 2)
 #commercial landings fit  
 commland <- sigmoidalFitFormula(lenbin.lower, 
-                    selplot[[2]]$summaryVector$maximum_y,
-                    selplot[[2]]$summaryVector$slope,
-                    selplot[[2]]$summaryVector$midPoint_x)
+                    selplot[[2]]$sigmoidalModel$maximum_Estimate,
+                    selplot[[2]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[2]]$sigmoidalModel$midPoint_Estimate)
 #force to max of 1
 commland1 <- sigmoidalFitFormula(lenbin.lower, 
                     1,
-                    selplot[[2]]$summaryVector$slope,
-                    selplot[[2]]$summaryVector$midPoint_x)
+                    selplot[[2]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[2]]$sigmoidalModel$midPoint_Estimate)
 #rec landings fit
 recland <- sigmoidalFitFormula(lenbin.lower, 
-                    selplot[[4]]$summaryVector$maximum_y,
-                    selplot[[4]]$summaryVector$slope,
-                    selplot[[4]]$summaryVector$midPoint_x)
+                    selplot[[4]]$sigmoidalModel$maximum_Estimate,
+                    selplot[[4]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[4]]$sigmoidalModel$midPoint_Estimate)
 #rec landings force to max 1
 recland1 <- sigmoidalFitFormula(lenbin.lower, 
                     1,
-                    selplot[[4]]$summaryVector$slope,
-                    selplot[[4]]$summaryVector$midPoint_x)
+                    selplot[[4]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[4]]$sigmoidalModel$midPoint_Estimate)
+
+#comm discards fit
+commdisc <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[1]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$maximum_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+#comm discards force max to 1
+commdisc1 <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[1]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      1,
+                                      selplot[[1]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+#comm discards max 1 and force dome back to 0 selection at large size, also reduce descending slope
+commdisc1d <- doublesigmoidalFitFormula(lenbin.lower,
+                                      0.0,
+                                      1,
+                                      selplot[[1]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      0.5*selplot[[1]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+
+# rec discards fit
+recdisc <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[3]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$maximum_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+# rec discards force max to 1
+recdisc1 <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[3]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      1,
+                                      selplot[[3]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+# rec discards max 1 and force dome back to 0 selection at large size
+recdisc1d <- doublesigmoidalFitFormula(lenbin.lower,
+                                      0.0,
+                                      1,
+                                      selplot[[3]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+
+```
+
+Visuals (curve 0 is fitted model, 1 is forced to max 1 with other parameters the same, and 1d is forced to descend to 0 for double logistic; points are selectivity at lengths derived from weight at age and age-based fleet selectivity):  
+
+```{r}
+
+expandedsel <- bind_cols(lenbin.lower=lenbin.lower,
+                         Comm.Land_0=commland,
+                         Comm.Land_1=commland1,
+                         Comm.Disc_0=commdisc,
+                         Comm.Disc_1=commdisc1,
+                         Comm.Disc_1d=commdisc1d,
+                         Recr.Land_0=recland,
+                         Recr.Land_1=recland1,
+                         Recr.Disc_0=recdisc,
+                         Recr.Disc_1=recdisc1,
+                         Recr.Disc_1d=recdisc1d) %>%
+  pivot_longer(-lenbin.lower, 
+               names_to = c("Fleet","curve"), 
+               names_sep = "_",
+               values_to = "selectivity") 
+  
+  ggplot() +
+  geom_line(data = expandedsel, aes(x=lenbin.lower, y=selectivity, colour=curve))+
+  geom_point(data = fleetselex2, aes(x=XLcm, y=Selex.prop.))+
+  facet_wrap(~Fleet)
 
 ```
 
 
-Commercial landings initial selectivity at length:
+Sinatra inputs relfect curve 1 for landings and curve 1d for discards:
+
+Fleet 1 in CTL, Commercial landings initial selectivity at length:
 `r commland1`
 
-Recreational landings initial selectivity at length:
+Fleet 2 in CTL, Commercial discards initial selectivity at length:
+`r commdisc1d`
+
+Fleet 3 in CTL, Recreational landings initial selectivity at length:
 `r recland1`
+
+Fleet 4 in CTL, Recreational discards initial selectivity at length:
+`r recdisc1d`
