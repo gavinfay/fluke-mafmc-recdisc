@@ -518,16 +518,16 @@ expandedsel <- bind_cols(lenbin.lower=lenbin.lower,
 ```
 
 
-Sinatra inputs relfect curve 1 for landings and curve 1d for discards:
+Sinatra inputs relfect curve 1 for landings and curve 1 for discards:
 
 Fleet 1 in CTL, Commercial landings initial selectivity at length:
 `r commland1`
 
 Fleet 2 in CTL, Commercial discards initial selectivity at length:
-`r commdisc1d`
+`r commdisc1`
 
 Fleet 3 in CTL, Recreational landings initial selectivity at length:
 `r recland1`
 
 Fleet 4 in CTL, Recreational discards initial selectivity at length:
-`r recdisc1d`
+`r recdisc1`
