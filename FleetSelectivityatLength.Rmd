@@ -300,7 +300,41 @@ Replaced at Sinatra.CTL lines 70-71 and 73-74:
 *  meanwtage.fem  `r meanwtage.fem`
 *  meanwtage.male  `r meanwtage.male`
 
-At present no way to distinguish begin year and mid year weight at age.
+We can distinguish begin year and mid year weight at age using weight at age matrices from the ASAP input file. If I understand the WAA_pointers correctly, they specify which input matrices are for the time of spawning (call this mid-year) and Jan 1 biomass. ASAP4 code found on p 25 [here](https://repository.library.noaa.gov/view/noaa/5027) uses the second to last WAA_pointer as SSB WAA and the last as Jan1 WAA. The pointers are:
+
+`asapinput$dat$WAA_pointers`: `r asapinput$dat$WAA_pointers`
+
+So the SSB (mid year) WAA matrix is 4, and the Jan1 WAA matrix is 3.
+
+Jan1 WAA, columns ages 0-7+, rows years `asapinput$dat$WAA_mats[[3]]`
+
+```{r}
+asapinput$dat$WAA_mats[[3]]
+```
+
+SSB/mid-year weight at age,  `asapinput$dat$WAA_mats[[4]]`
+
+```{r}
+asapinput$dat$WAA_mats[[4]]
+```
+
+These are for sexes combined. We'll assume the difference between Jan 1 and spawning time WAA applies equally to females and males (incorrect, but maybe close enough). We'll also assume that the Sinatra length at age we converted to weight at age represents start year weight at age. We'll then use the mean difference between Jan1 and spawning time over all years for each age from the ASAP input file to determine what to add to the Sinatra mean weight at age to get mid year. 
+
+The ASAP plus group WAA is the same between matrices. This results in a lower weight at age midyear for the last age group using this method than for the previous age group. Not sure we want this?
+
+```{r}
+# proportional increase from Jan1 to spawning time
+# (SSB WAA - Jan1 WAA)/Jan1 WAA
+propinc <- colMeans((asapinput$dat$WAA_mats[[4]]-asapinput$dat$WAA_mats[[3]])/asapinput$dat$WAA_mats[[3]])
+
+meanwtage.fem.midyr <- meanwtage.fem + meanwtage.fem*propinc
+meanwtage.male.midyr <- meanwtage.male + meanwtage.male*propinc
+  
+```
+
+*  meanwtage.fem.midyr `r meanwtage.fem.midyr`
+
+*  meanwtage.male.midyr `r meanwtage.male.midyr`
 
 Could also use Sinatra.CTL vonB parameters if they are correct for summer flounder to get selectivity at length from selectivity at age. Plot shows points for mean length at age input at lines 54-55, solid lines estimated length at age from the vonB parameters input at lines 56-57, and dotted lines are +2 std length for females and -2std length for males:
 
