@@ -1,0 +1,567 @@
+---
+title: "Fleet Selectivity at Length"
+author: "Sarah Gaichas"
+date: "10/20/2021"
+output: 
+  html_document:
+    code_fold: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+```
+
+## Convert assessment selectivity at age to selectivity at length
+
+Mark Terciero sent the survey length weight equation parameters, selectivity info from the 2021 Summer flounder management track assessment model (ASAP), and conversions to mean length at age (file in this directory: `Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx`).
+
+>Attached is a spreadsheet with the NEFSC SV L-W equation (cm and kg) and the selectivity information from the 2021 MTA ASAP run (F2021_2019_V1.DAT).
+>
+>I dug out the estimated selectivities by fleet for the last time block (2008-2019) from the ASAP run, and compiled the average mean weights at age for the last 5 years.  I then used the L-W equation to calculate the associated mean lengths at age.  All of this is in the Fleet Selex tab.
+>
+>So - you have the selex at age by fleet and the associated mean weights and lengths at age, effectively giving the fleet selex at the fleet mean lengths.
+E.g., for the Comm Land at age 4 = selex = 1.00, xwkg = 0.972, xlcm = 45.5, and so on...
+>
+>You/Gavin can now fit logistics, double logistics, or whatever else to get selex function at length for the four fleets.
+
+Read in the fleet specific age based selectivities, average weight at age, and length-weight equation parameters from the sheet:
+
+```{r}
+library(tidyverse)
+library(readxl)
+
+# from https://github.com/tidyverse/readxl/issues/486#issuecomment-398224438
+read_excel_multiline <- function(filename, row_collapse = 1, ...) {
+  nms <- read_excel(filename, range = cell_rows(seq_len(row_collapse)), col_names = F)  
+  nms <- lapply(nms, na.omit)
+  nms <- lapply(nms, paste, collapse = "_")
+
+  read_excel(filename, skip = row_collapse, col_names = unlist(nms), ...)                                     
+}
+
+# can't use the function on subsets of the sheet easily so just hardcode for sheet sections
+fleetageselex.names <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A3:H4", col_names = F)
+fleetageselex.names <- lapply(fleetageselex.names, na.omit)
+fleetageselex.names <- lapply(fleetageselex.names, paste, collapse = "_")
+
+fleetageselex <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A5:H12", col_names = unlist(fleetageselex.names))
+
+fleetavgwtage.names <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A14:H15", col_names = F)
+fleetavgwtage.names <- lapply(fleetavgwtage.names, na.omit)
+fleetavgwtage.names <- lapply(fleetavgwtage.names, paste, collapse = "_")
+  
+fleetavgwtage <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", sheet = "Fleet Selex", range = "A16:H23", col_names = unlist(fleetavgwtage.names))
+
+# W (kg) = a*L(cm)^b
+lenwt_a <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", 
+                      sheet = "Fleet Selex", 
+                      range = "J13",
+                      col_names=FALSE)[[1]]
+lenwt_b <- read_excel("Summer_flounder_SVLW_SELEX_Age_Lencm.xlsx", 
+                      sheet = "Fleet Selex", 
+                      range = "K13",
+                      col_names=FALSE)[[1]]
+
+
+```
+
+Get mean length at age from weights at age for each fleet and align with age specific selectivities:
+
+```{r}
+
+fleetwtage <- fleetavgwtage %>%
+  dplyr::rename_all(make.names) %>%
+  dplyr::select(Age = 'Comm.Land_Age', matches('XWkg'))
+  
+# could also join with a more general survey average wt at age instead
+# or back out from age-length relationship
+# using assessment avgwtage by fleet for now
+
+fleetselex <- fleetageselex %>%
+  dplyr::rename_all(make.names) %>%
+  dplyr::select(Age = 'Comm.Land_Age', matches('Selex')) %>%
+  dplyr::left_join(fleetwtage) %>%
+  tidyr::pivot_longer(
+    cols = -Age,
+    names_to = c("Fleet", "Variable"),
+    names_sep = "_",
+    values_to = "Value"
+  ) %>%
+  tidyr::pivot_wider(names_from = "Variable", 
+                     values_from = "Value") %>%
+  dplyr::mutate(XLcm = exp((log(XWkg)-log(lenwt_a))/lenwt_b))
+  
+  
+ggplot2::ggplot(fleetselex, aes(x=XLcm, y=Selex.prop.)) + 
+  geom_point() + 
+  facet_grid(~Fleet) + 
+  xlab("mean length (cm)") +
+  ylab("proportion selected")
+
+
+```
+
+Sinatra is using 2 cm length bins from (lower limit) 10 to 92 cm.
+
+I think we will need to make a decision about the extent of domed selectivity for the larger sizes if we fit a function to this, or we can just do linear interpolation and hold the ends steady since it is an input vector of starting values rather than a set of function parameters.
+
+Import things from the ASAP dat file for Sinatra using a handy function [`wham::read_asap3_dat()`](https://github.com/timjmiller/wham/blob/master/R/read_asap3_dat.R):
+```{r}
+#library(r4ss)
+#devtools::install_github("timjmiller/wham") #WHAM install failing
+#library(wham) 
+# this is the function from WHAM I want
+# https://github.com/timjmiller/wham/blob/master/R/read_asap3_dat.R
+
+read_asap3_dat <- function(filename){
+  char.lines <- readLines(filename)
+  com.ind <- which(substring(char.lines,1,1) == "#")
+  #print(com.ind)
+  dat.start <- com.ind[c(which(diff(com.ind)>1), length(com.ind))]
+  comments <- char.lines[dat.start]
+  #print(comments)
+  #print(dat.start)
+  #print(length(dat.start))
+  dat <- list()
+  ind <- 0
+  dat$n_years <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$year1 <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$n_ages <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$n_fleets <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  #print(dat)
+  #print(ind)
+  dat$n_fleet_sel_blocks <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$n_indices <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+
+  dat$M <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years*dat$n_ages), dat$n_years, dat$n_ages, byrow = TRUE)
+  dat$fec_opt <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$fracyr_spawn <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$maturity <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years*dat$n_ages), dat$n_years, dat$n_ages, byrow = TRUE)
+  dat$n_WAA_mats <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$WAA_mats <- lapply(1:dat$n_WAA_mats, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = dat$n_years*dat$n_ages), dat$n_years, dat$n_ages, byrow = TRUE))
+
+  ind <- ind+dat$n_WAA_mats
+  npt <- dat$n_fleets * 2 + 2 + 2
+  dat$WAA_pointers <- sapply(1:npt, function(x) scan(filename, quiet=T, what = integer(), skip = dat.start[ind+1]+x-1, n = 1))
+  ind <- ind + 1
+  # print(ind)
+
+  dat$sel_block_assign <- lapply(1:dat$n_fleets, function(x) scan(filename, quiet=T, what = integer(), skip = dat.start[ind+x], n = dat$n_years))
+  ind <- ind+dat$n_fleets
+  dat$sel_block_option <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_fleet_sel_blocks)
+  # print(ind)
+  # print(dat.start[ind])
+  dat$sel_ini <- lapply(1:dat$n_fleet_sel_blocks, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = 4*(dat$n_ages+6)), dat$n_ages+6, 4, byrow = TRUE))
+  ind <- ind + dat$n_fleet_sel_blocks
+  dat$fleet_sel_start_age <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$fleet_sel_end_age <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$Frep_ages <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 2)
+  dat$Frep_type <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$use_like_const <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$release_mort <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+
+  dat$CAA_mats <- lapply(1:dat$n_fleets, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = dat$n_years*(dat$n_ages+1)), dat$n_years, dat$n_ages+1, byrow = TRUE))
+  ind <- ind + dat$n_fleets
+  dat$DAA_mats <- lapply(1:dat$n_fleets, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = dat$n_years*(dat$n_ages+1)), dat$n_years, dat$n_ages+1, byrow = TRUE))
+  ind <- ind + dat$n_fleets
+  dat$prop_rel_mats <- lapply(1:dat$n_fleets, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = dat$n_years*(dat$n_ages)), dat$n_years, dat$n_ages, byrow = TRUE))
+  ind <- ind + dat$n_fleets
+  # print(ind)
+
+  dat$index_units <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_acomp_units <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_WAA_pointers <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_month <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_sel_choice <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_sel_option <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_sel_start_age <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_sel_end_age <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$use_index_acomp <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$use_index <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$index_sel_ini <- lapply(1:dat$n_indices, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = 4*(dat$n_ages+6)), dat$n_ages+6, 4, byrow = TRUE))
+  ind <- ind + dat$n_indices
+  # print(dat$n_indices)
+  #stop()
+  # print(dat$index_sel_ini)
+  dat$IAA_mats <- lapply(1:dat$n_indices, function(x) matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind+x], n = dat$n_years*(dat$n_ages+4)), dat$n_years, dat$n_ages+4, byrow = TRUE))
+  ind <- ind + dat$n_indices
+  # print(ind)
+
+  dat$phase_F1 <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_F_devs <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_rec_devs <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_N1_devs <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_q <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_q_devs <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_SR_scalar <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$phase_steepness <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$recruit_cv <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years)
+
+  dat$lambda_index <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$lambda_catch <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$lambda_discard <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+
+  dat$catch_cv <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years*dat$n_fleets), dat$n_years, dat$n_fleets, byrow = TRUE)
+  dat$discard_cv <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years*dat$n_fleets), dat$n_years, dat$n_fleets, byrow = TRUE)
+  dat$catch_Neff <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years*dat$n_fleets), dat$n_years, dat$n_fleets, byrow = TRUE)
+  dat$discard_Neff <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_years*dat$n_fleets), dat$n_years, dat$n_fleets, byrow = TRUE)
+  # print(ind)
+
+  dat$lambda_F1 <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$cv_F1 <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$lambda_F_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$cv_F_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+
+  dat$lambda_N1_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$cv_N1_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$lambda_rec_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+
+  dat$lambda_q <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$cv_q <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+
+  dat$lambda_q_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$cv_q_devs <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+
+  dat$lambda_steepness <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$cv_steepness <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+
+  dat$lambda_SR_scalar <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$cv_SR_scalar <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  # print(ind)
+
+  dat$N1_flag <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$N1_ini <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_ages)
+  dat$F1_ini <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$q_ini <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = dat$n_indices)
+  dat$SR_scalar_type <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$SR_scalar_ini <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$steepness_ini <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$Fmax <- scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$ignore_guesses <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  # print(ind)
+
+  dat$do_proj <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$dir_fleet <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = dat$n_fleets)
+  dat$nfinalyear <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  n <- dat$nfinalyear-dat$year1-dat$n_years+1
+  # print(n)
+  # print(ind)
+  # print(dat.start[ind])
+  if(n>0) dat$proj_ini <- matrix(scan(filename, quiet=T, what = double(), skip = dat.start[ind <- ind + 1], n = n*5), n, 5, byrow = TRUE)
+  else dat$proj_ini <- matrix(nrow = 0, ncol = 5)
+  dat$doMCMC <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$MCMC_nyear_opt <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$MCMC_nboot <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$MCMC_nthin <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$MCMC_nseed <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$fill_R_opt <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$R_avg_start <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$R_avg_end <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$make_R_file <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  dat$testval <- scan(filename, quiet=T, what = integer(), skip = dat.start[ind <- ind + 1], n = 1)
+  # print(dat$testval)
+  # print(ind)
+  return(list(dat = dat, comments = comments))
+}
+
+asapinput <- read_asap3_dat("benchmark_files/F2021_2019_V1_MCMC.dat")
+
+```
+
+ASAP has annual weight at age for different fleets and indices, but the Sinatra input is mean weight at age at the beginning of the year and mid year (presumably in the population).
+
+I've replaced the Sinatra L-W equation parameters at lines 76-77 with those received from Mark: 
+
+*  lenwt_a `r lenwt_a`
+*  lenwt_b `r lenwt_b`
+
+We could just use the L-W equation parameters to translate Sinatra mean length at age to mean weight at age for compatibility. 
+
+```{r}
+
+# from Sinatra.CTL lines 54-55
+meanlenage.fem <- c(6.9371,	19.0716,	29.2072,	37.6731,	44.7444,	50.6509,	55.5844,	59.7052)
+meanlenage.male <- c(5.4998,	15.1201,	23.1556,	29.8674,	35.4736,	40.1562,	44.0676,	47.3345)
+age <- c(0:7)
+
+#from Sinatra.CTL lines 62-63
+sdlenage.fem <- c(0.6937,	1.9072,	2.9207,	3.7673,	4.4744,	5.0651,	5.5584,	5.9705)
+sdlenage.male <- c(0.5500,	1.5120,	2.3156,	2.9867,	3.5474,	4.0156,	4.4068,	4.7335)
+
+
+meanwtage.fem <- lenwt_a*(meanlenage.fem)^lenwt_b
+meanwtage.male <- lenwt_a*(meanlenage.male)^lenwt_b
+```
+
+Replaced at Sinatra.CTL lines 70-71 and 73-74:
+
+*  meanwtage.fem  `r meanwtage.fem`
+*  meanwtage.male  `r meanwtage.male`
+
+We can distinguish begin year and mid year weight at age using weight at age matrices from the ASAP input file. If I understand the WAA_pointers correctly, they specify which input matrices are for the time of spawning (call this mid-year) and Jan 1 biomass. ASAP4 code found on p 25 [here](https://repository.library.noaa.gov/view/noaa/5027) uses the second to last WAA_pointer as SSB WAA and the last as Jan1 WAA. The pointers are:
+
+`asapinput$dat$WAA_pointers`: `r asapinput$dat$WAA_pointers`
+
+So the SSB (mid year) WAA matrix is 4, and the Jan1 WAA matrix is 3.
+
+Jan1 WAA, columns ages 0-7+, rows years `asapinput$dat$WAA_mats[[3]]`
+
+```{r}
+asapinput$dat$WAA_mats[[3]]
+```
+
+SSB/mid-year weight at age,  `asapinput$dat$WAA_mats[[4]]`
+
+```{r}
+asapinput$dat$WAA_mats[[4]]
+```
+
+These are for sexes combined. We'll assume the difference between Jan 1 and spawning time WAA applies equally to females and males (incorrect, but maybe close enough). We'll also assume that the Sinatra length at age we converted to weight at age represents start year weight at age. We'll then use the mean difference between Jan1 and spawning time over all years for each age from the ASAP input file to determine what to add to the Sinatra mean weight at age to get mid year. 
+
+The ASAP plus group WAA is the same between matrices. This results in a lower weight at age midyear for the last age group using this method than for the previous age group. Not sure we want this?
+
+```{r}
+# proportional increase from Jan1 to spawning time
+# (SSB WAA - Jan1 WAA)/Jan1 WAA
+propinc <- colMeans((asapinput$dat$WAA_mats[[4]]-asapinput$dat$WAA_mats[[3]])/asapinput$dat$WAA_mats[[3]])
+
+meanwtage.fem.midyr <- meanwtage.fem + meanwtage.fem*propinc
+meanwtage.male.midyr <- meanwtage.male + meanwtage.male*propinc
+  
+```
+
+*  meanwtage.fem.midyr `r meanwtage.fem.midyr`
+
+*  meanwtage.male.midyr `r meanwtage.male.midyr`
+
+Could also use Sinatra.CTL vonB parameters if they are correct for summer flounder to get selectivity at length from selectivity at age. Plot shows points for mean length at age input at lines 54-55, solid lines estimated length at age from the vonB parameters input at lines 56-57, and dotted lines are +2 std length for females and -2std length for males:
+
+```{r}
+
+# from Sinatra.CTL lines 56-57
+#growth parameters, Linfin,K,tzero by stock and sex
+growth.fem <- data.frame(vbLinf = 80.6, vbK = 0.18, vbt0 =	-0.1)
+growth.male <- data.frame(vbLinf = 63.9, vbK = 0.18, vbt0 =	-0.1)
+
+vb.fem <- growth.fem$vbLinf*(1-exp(-growth.fem$vbK*(age-growth.fem$vbt0)))
+vb.male <- growth.male$vbLinf*(1-exp(-growth.male$vbK*(age-growth.male$vbt0)))
+
+#plot to check
+plot(age, meanlenage.fem, ylim=c(0,90))
+points(age, meanlenage.male)
+lines(age, vb.fem)
+lines(age, vb.male)
+lines(age, (meanlenage.fem + 2*sdlenage.fem), lty="dotted")
+lines(age, (meanlenage.male - 2*sdlenage.male), lty="dotted")
+
+```
+VonB parameters are a bit lower length at age than the input vector but close. We'll use the input vector of mean length at age to translate selectivity at age to selectivity at length. Lines are from average length at age if fleets were really age selective... but they aren't. Length from average weight at age from the fishery (points) is showing that only the larger fish at young ages are selected.
+
+```{r}
+
+meanlenage <- data.frame(
+  bind_cols(age = age, 
+            lenfem = meanlenage.fem, 
+            lenmale = meanlenage.male)
+) %>%
+  dplyr::mutate(Age = case_when(age==7 ~ "7+",
+                          TRUE ~ as.character(age)))
+
+fleetselex2 <- fleetselex %>%
+  left_join(meanlenage)
+  
+
+ggplot2::ggplot(fleetselex2, aes(x=XLcm, y=Selex.prop.)) + 
+  geom_point() + 
+  geom_line(aes(x=lenfem, y=Selex.prop.)) +
+  facet_grid(~Fleet) +
+  xlab("mean length (cm)") +
+  ylab("proportion selected")
+  
+  
+```
+
+Fitting a curve to these using R package [`sicegar`](https://cran.r-project.org/web/packages/sicegar/index.html) which fits single and double logistic fits for single cell growth analysis and has nice diagnostics for fits; see https://peerj.com/articles/4251/. Found via [Dan Duplisea's github](https://github.com/duplisea/dublogistic) where I copied the plotting code.  
+
+MSE modeling group decisions from the 20 October meeting are to force both landings fleets to have flat-topped selectivity at length (max out at 1 for all larger sizes), and to fit double logistic/domed length based selectivity for the discard fleets.
+
+```{r}
+
+#devtools::install_github("duplisea/dublogistic")
+#library(dublogistic)
+#see end of readme https://github.com/duplisea/dublogistic
+#https://peerj.com/articles/4251/
+library(sicegar)
+
+fitsel <- function(dat){
+  
+  fit.obj <- fitAndCategorize(dat[,-1],
+                              threshold_minimum_for_intensity_maximum = 0.3,
+                              threshold_intensity_range = 0.1, 
+                              threshold_t0_max_int = 0.05)
+  
+  # MSE modeling subgroup decisions Oct 20:
+  # 1 and 3 are discards and should be doubleSigmoidal 
+  # 2 and 4 are landings and should be sigmoidal/flat topped at 1 for larger fish
+  
+  if(fit.obj$summaryVector$decision=="double_sigmoidal"){
+    sicegar.fit <- figureModelCurves(dataInput = fit.obj$normalizedInput,
+                                     doubleSigmoidalFitVector= fit.obj$doubleSigmoidalModel, #1&3
+                                     showParameterRelatedLines = TRUE)
+    
+  }else{
+    if(fit.obj$summaryVector$decision=="sigmoidal"){
+      sicegar.fit <- figureModelCurves(dataInput = fit.obj$normalizedInput,
+                                       sigmoidalFitVector= fit.obj$sigmoidalModel, #2&4
+                                       showParameterRelatedLines = TRUE)
+    }else{
+      sicegar.fit <- figureModelCurves(dataInput = fit.obj$normalizedInput,
+                                       sigmoidalFitVector= fit.obj$sigmoidalModel, #2&4
+                                       doubleSigmoidalFitVector= fit.obj$doubleSigmoidalModel, #1&3
+                                       showParameterRelatedLines = TRUE)
+    }
+  }
+  sicegar.fit$labels$y=paste(unique(dat[,1]), "Selectvity")
+  sicegar.fit$labels$x="Length (cm)"
+  plot(sicegar.fit)
+  
+  return(fit.obj)
+}
+
+selplot <- fleetselex2 %>%
+  dplyr::group_by(Fleet) %>%
+  dplyr::select(time = XLcm, intensity = Selex.prop.) %>%
+  dplyr::group_map(~ fitsel(.x), keep = TRUE)
+  
+
+
+
+```
+
+Vectors for Sinatra.CTL from fits using sicegar estimates and functions. I've modified the fits to be forced to a maximum selectivity of 1 and for discard fleets have forced domes that descend to 0 selection for larger sizes. Otherwise the model fit estimates some constant selection of these larger sizes in discards, which I don't think we want.  I've also reduced the descending slope for commercial discards because it seemed too severe for the few observations of larger but still discarded fish. 
+
+```{r}
+
+lenbin.lower <- seq(10, 92, 2)
+#commercial landings fit  
+commland <- sigmoidalFitFormula(lenbin.lower, 
+                    selplot[[2]]$sigmoidalModel$maximum_Estimate,
+                    selplot[[2]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[2]]$sigmoidalModel$midPoint_Estimate)
+#force to max of 1
+commland1 <- sigmoidalFitFormula(lenbin.lower, 
+                    1,
+                    selplot[[2]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[2]]$sigmoidalModel$midPoint_Estimate)
+#rec landings fit
+recland <- sigmoidalFitFormula(lenbin.lower, 
+                    selplot[[4]]$sigmoidalModel$maximum_Estimate,
+                    selplot[[4]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[4]]$sigmoidalModel$midPoint_Estimate)
+#rec landings force to max 1
+recland1 <- sigmoidalFitFormula(lenbin.lower, 
+                    1,
+                    selplot[[4]]$sigmoidalModel$slopeParam_Estimate,
+                    selplot[[4]]$sigmoidalModel$midPoint_Estimate)
+
+#comm discards fit
+commdisc <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[1]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$maximum_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+#comm discards force max to 1
+commdisc1 <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[1]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      1,
+                                      selplot[[1]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+#comm discards max 1 and force dome back to 0 selection at large size, also reduce descending slope
+commdisc1d <- doublesigmoidalFitFormula(lenbin.lower,
+                                      0.0,
+                                      1,
+                                      selplot[[1]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      0.5*selplot[[1]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[1]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+
+# rec discards fit
+recdisc <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[3]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$maximum_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+# rec discards force max to 1
+recdisc1 <- doublesigmoidalFitFormula(lenbin.lower,
+                                    selplot[[3]]$doubleSigmoidalModel$finalAsymptoteIntensityRatio_Estimate,
+                                      1,
+                                      selplot[[3]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+# rec discards max 1 and force dome back to 0 selection at large size
+recdisc1d <- doublesigmoidalFitFormula(lenbin.lower,
+                                      0.0,
+                                      1,
+                                      selplot[[3]]$doubleSigmoidalModel$slope1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPoint1Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$slope2Param_Estimate,
+                                      selplot[[3]]$doubleSigmoidalModel$midPointDistanceParam_Estimate)
+
+
+```
+
+Visuals (curve 0 is fitted model, 1 is forced to max 1 with other parameters the same, and 1d is forced to descend to 0 for double logistic; points are selectivity at lengths derived from weight at age and age-based fleet selectivity):  
+
+```{r}
+
+expandedsel <- bind_cols(lenbin.lower=lenbin.lower,
+                         Comm.Land_0=commland,
+                         Comm.Land_1=commland1,
+                         Comm.Disc_0=commdisc,
+                         Comm.Disc_1=commdisc1,
+                         Comm.Disc_1d=commdisc1d,
+                         Recr.Land_0=recland,
+                         Recr.Land_1=recland1,
+                         Recr.Disc_0=recdisc,
+                         Recr.Disc_1=recdisc1,
+                         Recr.Disc_1d=recdisc1d) %>%
+  pivot_longer(-lenbin.lower, 
+               names_to = c("Fleet","curve"), 
+               names_sep = "_",
+               values_to = "selectivity") 
+  
+  ggplot() +
+  geom_line(data = expandedsel, aes(x=lenbin.lower, y=selectivity, colour=curve))+
+  geom_point(data = fleetselex2, aes(x=XLcm, y=Selex.prop.))+
+  facet_wrap(~Fleet)
+
+```
+
+
+Sinatra inputs relfect curve 1 for landings and curve 1 for discards:
+
+Fleet 1 in CTL, Commercial landings initial selectivity at length:
+`r commland1`
+
+Fleet 2 in CTL, Commercial discards initial selectivity at length:
+`r commdisc1`
+
+Fleet 3 in CTL, Recreational landings initial selectivity at length:
+`r recland1`
+
+Fleet 4 in CTL, Recreational discards initial selectivity at length:
+`r recdisc1`
