@@ -1,1 +1,37 @@
 metric,value,mp
+P(not overfished),0.9945652173913043,MP 1
+expense,41.848532427795035,MP 1
+P(not overfishing),0.992948717948718,MP 1
+keep_wt,4543.04,MP 1
+kept per trip,0.2691698817658137,MP 1
+kept:released,0.09759158362152187,MP 1
+mulen_keep,19.8112512526996,MP 1
+mulen_release,13.722250748669548,MP 1
+release_wt,1517.975,MP 1
+spawning biomass,66786.71,MP 1
+total catch,14736.074999999999,MP 1
+trophy,0.016374616305147652,MP 1
+P(not overfished),0.9873188405797102,MP 4
+expense,41.87009312165266,MP 4
+P(not overfishing),0.9910256410256411,MP 4
+keep_wt,4407.775,MP 4
+kept per trip,0.4472172971427447,MP 4
+kept:released,0.5691033965784722,MP 4
+mulen_keep,16.319036974343902,MP 4
+mulen_release,12.8532760102478,MP 4
+release_wt,392.12,MP 4
+spawning biomass,68925.83,MP 4
+total catch,13218.32,MP 4
+trophy,0.0031102096482857,MP 4
+P(not overfished),0.9716312056737588,MP 7
+expense,41.85547309790148,MP 7
+P(not overfishing),0.9903381642512077,MP 7
+keep_wt,6498.174999999999,MP 7
+kept per trip,0.6127126074799705,MP 7
+kept:released,0.334114262971797,MP 7
+mulen_keep,16.99672517667375,MP 7
+mulen_release,13.144958154064451,MP 7
+release_wt,999.44,MP 7
+spawning biomass,57324.369999999995,MP 7
+total catch,14870.630000000001,MP 7
+trophy,0,MP 7

@@ -313,7 +313,10 @@ scendir <- c("~/Dropbox/fluke-mse/01-01/",
              "~/Dropbox/fluke-mse/sims/04-03/",
              #"~/Dropbox/fluke-mse/sims/04-04/",
              "~/Dropbox/fluke-mse/sims/07-02/",
-             "~/Dropbox/fluke-mse/sims/07-03/"),
+             "~/Dropbox/fluke-mse/sims/07-03/",
+             "~/Dropbox/fluke-mse/mbp/01-04/",
+             "~/Dropbox/fluke-mse/mbp/04-04/",
+             "~/Dropbox/fluke-mse/mbp/07-04/"),
 scen.name <- c("MP 1",
                "MP 4",
                "MP 7",
@@ -322,8 +325,34 @@ scen.name <- c("MP 1",
                "MP 4",
                "MP 4",
                "MP 7",
+               "MP 7",
+               "MP 1",
+               "MP 4",
                "MP 7"),
-fsim <- c(1, 1, 1, 26, 51,26, 51, 26, 51))
+fsim <- c(1, 1, 1, 26, 51,26, 51, 26, 51,76,76,76))
+
+# params <- list(
+#   scendir <- c("~/Dropbox/fluke-mse/01-01/",
+#                "~/Dropbox/fluke-mse/sims/01-02/",
+#                "~/Dropbox/fluke-mse/sims/01-03/",
+#                "~/Dropbox/fluke-mse/mbp/01-04/",
+#                "~/Dropbox/fluke-mse/sims/02-01/",
+#                "~/Dropbox/fluke-mse/sims/02-02/",
+#                "~/Dropbox/fluke-mse/sims/03-01/",
+#                "~/Dropbox/fluke-mse/sims/03-02/",
+#                "~/Dropbox/fluke-mse/sims/05-01/",
+#                "~/Dropbox/fluke-mse/sims/05-02/"),
+#   scen.name <- c("MP 1",
+#                  "MP 1",
+#                  "MP 1",
+#                  "MP 1",
+#                  "MP 2",
+#                  "MP 2",
+#                  "MP 3",
+#                  "MP 3",
+#                  "MP 5",
+#                  "MP 5"),
+#   fsim <- c(1,  26, 51,  76, 1, 26, 1, 26, 1, 26))
 
 #summarize the output files
 all_results <- purrr::pmap_dfr(params,read_results)
@@ -390,7 +419,7 @@ p3 <- diag_ts %>%
 ## table info
 table_out1 <- diag_ts %>% 
   filter(year >= 2022) %>% 
-  slice(!which(type=="spawning biomass" && value ==0)) %>% 
+  #slice(!which(type=="spawning biomass" && value ==0)) %>% 
   group_by(scenario, type) %>% 
   summarize(value = case_when(
     type == "F/Fref" ~ mean(value<1, na.rm=TRUE),
