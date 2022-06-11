@@ -7,11 +7,11 @@
 #
 #########################################################################################
 #Number of years for projection
-30
+26
 #frequency of assessment, update RBC (every n yrs)
-1
+2
 #tier rule
-61
+62
 #number of years to base allocation estimation on
 1
 #min catch in mt (ie if RBC = 0)
