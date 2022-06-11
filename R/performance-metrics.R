@@ -67,8 +67,9 @@ do_radar_plot <- function(metrics) {
                    "mulen_keep" = c(1,0),
                    "mulen_release" = c(1,0),
                    "trophy" = c(1,0),
-                   "keep_wt" = c(1,0),
-                   "release_wt" = c(1,0)) #,
+                   "rec_removals" = c(1,0),
+                   "keep_one" = c(1,0),
+                   "ntrips" = c(1,0)) #,
   #d = c(1,0),
   #e = c(1,0))
   
@@ -539,6 +540,13 @@ minmax_metrics <- median_metrics %>%
             max_val = max(value))  
 
 write_csv(minmax_metrics,file = "performance-metrics-minmax-of-medians.csv")
+
+
+# radar chart - not sure how to save this to file automagically
+p3 <- median_metrics %>% 
+  filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
+  do_radar_plot()
+
 
 
 ### state information ###
