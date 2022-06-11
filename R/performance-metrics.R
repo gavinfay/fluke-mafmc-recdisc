@@ -474,24 +474,24 @@ ggsave("boxplot-comparisons.png",p2,width=8,height=8)
 #ggsave("m2-5-trajectory-comparisons.png",p1,width=8,height=8)
 #ggsave("m2-5-boxplot-comparisons.png",p2,width=8,height=8)
 
-# radar chart - not sure how to save this to file automagically
-p3 <- diag_ts %>% 
-  filter(year >= 2022) %>% 
-  group_by(scenario, type) %>% 
-  summarize(value = case_when(
-    type == "F/Fref" ~ mean(value<1, na.rm=TRUE),
-    type == "B/Bref" ~ mean(value>0.5, na.rm=TRUE),
-    TRUE ~ mean(value, na.rm=TRUE))) %>% 
-  distinct() %>%  #unsure what is happening, but this helps.
-  rename(metric = type,
-         mp = scenario) %>% 
-  mutate(metric = case_when(
-    metric == "F/Fref" ~ "not overfishing",
-    metric == "B/Bref" ~ "not overfished",
-    TRUE ~ metric)) %>% 
-  select(metric,value,mp) %>% 
-  do_radar_plot()
-#ggsave("radarplot-comparisons.png",p3,width=8,height=8)
+# # radar chart - not sure how to save this to file automagically
+# p3 <- diag_ts %>% 
+#   filter(year >= 2022) %>% 
+#   group_by(scenario, type) %>% 
+#   summarize(value = case_when(
+#     type == "F/Fref" ~ mean(value<1, na.rm=TRUE),
+#     type == "B/Bref" ~ mean(value>0.5, na.rm=TRUE),
+#     TRUE ~ mean(value, na.rm=TRUE))) %>% 
+#   distinct() %>%  #unsure what is happening, but this helps.
+#   rename(metric = type,
+#          mp = scenario) %>% 
+#   mutate(metric = case_when(
+#     metric == "F/Fref" ~ "not overfishing",
+#     metric == "B/Bref" ~ "not overfished",
+#     TRUE ~ metric)) %>% 
+#   select(metric,value,mp) %>% 
+#   do_radar_plot()
+# #ggsave("radarplot-comparisons.png",p3,width=8,height=8)
 
 
 ######
