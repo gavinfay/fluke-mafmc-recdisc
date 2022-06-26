@@ -1,0 +1,106 @@
+mp,metric,value
+MP 1,change_cs,-29451259.761441007
+MP 1,cs_per_trip,-3.011334000085036
+MP 1,expense,402482699.6101506
+MP 1,keep_one,0.18517724767981952
+MP 1,kept per trip,0.26084286547213786
+MP 1,kept:released,0.09736046096606515
+MP 1,mulen_keep,19.815487454156195
+MP 1,mulen_release,13.697402665423844
+MP 1,not overfished,1
+MP 1,not overfishing,1
+MP 1,ntrips,9588698.963847376
+MP 1,rec_removals,5181.237499999999
+MP 1,spawning biomass,46397.172
+MP 1,total catch,11730.6125
+MP 1,trophy,0.015894803963229027
+MP 2,change_cs,-119974183.26204482
+MP 2,cs_per_trip,-11.86020854671693
+MP 2,expense,419828165.47958434
+MP 2,keep_one,0.27320040149962127
+MP 2,kept per trip,0.44608530965587534
+MP 2,kept:released,0.19734693481427001
+MP 2,mulen_keep,18.48522901898002
+MP 2,mulen_release,13.29488018255871
+MP 2,not overfished,1
+MP 2,not overfishing,0.9
+MP 2,ntrips,10001113.675483191
+MP 2,rec_removals,6584.9765
+MP 2,spawning biomass,40979.088
+MP 2,total catch,12099.622
+MP 2,trophy,0.007409792610457323
+MP 3,change_cs,-32137392.496378094
+MP 3,cs_per_trip,-3.2314645901376586
+MP 3,expense,405315195.10728395
+MP 3,keep_one,0.18961718817920875
+MP 3,kept per trip,0.2636040156119528
+MP 3,kept:released,0.09987429528334794
+MP 3,mulen_keep,19.82875726268015
+MP 3,mulen_release,13.686293807714549
+MP 3,not overfished,1
+MP 3,not overfishing,1
+MP 3,ntrips,9650470.149282174
+MP 3,rec_removals,5290.7725
+MP 3,spawning biomass,46128.0775
+MP 3,total catch,11718.573
+MP 3,trophy,0.01593645052044076
+MP 4,change_cs,-120674518.63147712
+MP 4,cs_per_trip,-11.900461495507614
+MP 4,expense,420141274.1302006
+MP 4,keep_one,0.26868024673357704
+MP 4,kept per trip,0.4539472567276073
+MP 4,kept:released,0.19162660116001104
+MP 4,mulen_keep,18.504486665583123
+MP 4,mulen_release,13.305210369646446
+MP 4,not overfished,1
+MP 4,not overfishing,0.8500000000000001
+MP 4,ntrips,10010164.407998016
+MP 4,rec_removals,6739.011
+MP 4,spawning biomass,40360.1825
+MP 4,total catch,12104.4205
+MP 4,trophy,0.007103355234320421
+MP 6,change_cs,-126847603.95582485
+MP 6,cs_per_trip,-12.443088541682611
+MP 6,expense,422248221.6757457
+MP 6,keep_one,0.29132960419959164
+MP 6,kept per trip,0.4807196748037368
+MP 6,kept:released,0.23214780245186395
+MP 6,mulen_keep,18.285282699666165
+MP 6,mulen_release,13.156951959858766
+MP 6,not overfished,1
+MP 6,not overfishing,0.25
+MP 6,ntrips,10075818.353346575
+MP 6,rec_removals,6756.011
+MP 6,spawning biomass,39977.1365
+MP 6,total catch,12093.486
+MP 6,trophy,0.006099720285581287
+MP 7,change_cs,-136537449.36874425
+MP 7,cs_per_trip,-13.48953902770642
+MP 7,expense,424034554.8043608
+MP 7,keep_one,0.3436080810292871
+MP 7,kept per trip,0.4423241597196256
+MP 7,kept:released,0.18585704285825014
+MP 7,mulen_keep,17.94349154255752
+MP 7,mulen_release,13.42307481019009
+MP 7,not overfished,1
+MP 7,not overfishing,1
+MP 7,ntrips,10114348.14992451
+MP 7,rec_removals,6219.3405
+MP 7,spawning biomass,40978.8315
+MP 7,total catch,11778.8355
+MP 7,trophy,0.007134972688547736
+MP 8,change_cs,-196612554.08059397
+MP 8,cs_per_trip,-18.667205132777095
+MP 8,expense,437317580.34412694
+MP 8,keep_one,0.3473993703759227
+MP 8,kept per trip,0.6160812971108124
+MP 8,kept:released,0.37631306977650403
+MP 8,mulen_keep,16.968399399435995
+MP 8,mulen_release,12.96029726303404
+MP 8,not overfished,1
+MP 8,not overfishing,0
+MP 8,ntrips,10417705.277274381
+MP 8,rec_removals,6590.77
+MP 8,spawning biomass,36963.5255
+MP 8,total catch,11766.887999999999
+MP 8,trophy,0

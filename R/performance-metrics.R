@@ -58,17 +58,18 @@ do_radar_plot <- function(metrics) {
   
   bounds <- tibble(mp = c("max","min"),
                    "spawning biomass" = c(1,0),
-                   "total catch" = c(1,0),
+                   #"total catch" = c(1,0),
                    "kept:released" = c(1,0),
                    "kept per trip" = c(1,0),
                    "not overfishing" = c(1,0),
                    "not overfished" = c(1,0),
-                   "expense" = c(1,0),
+                   "change_cs" = c(1,0),
                    "mulen_keep" = c(1,0),
                    "mulen_release" = c(1,0),
                    "trophy" = c(1,0),
                    "rec_removals" = c(1,0),
                    "keep_one" = c(1,0),
+                   "prop_female" = c(1,0),
                    "ntrips" = c(1,0)) #,
   #d = c(1,0),
   #e = c(1,0))
@@ -103,9 +104,24 @@ do_radar_plot <- function(metrics) {
                   alpha("#E69F00",0.9),
                   alpha("#56B4E9",0.9),
                   alpha("#009E73",0.9))
+
+  colors_fill2<-c(alpha("#1b9e77",0.1),
+                  alpha("#d95f02",0.1),
+                  alpha("#7570b3",0.1),
+                  alpha("#e7298a",0.1),
+                  alpha("#66a61e",0.1),
+                  alpha("#e6ab02",0.1),
+                  alpha("#a6761d",0.1),
+                  alpha("#d95f02",0.1))
   
-  
-  #d95f02
+  colors_line2<-c(alpha("#1b9e77",0.9),
+                  alpha("#d95f02",0.9),
+                  alpha("#7570b3",0.9),
+                  alpha("#e7298a",0.9),
+                  alpha("#66a61e",0.9),
+                  alpha("#e6ab02",0.9),
+                  alpha("#a6761d",0.9),
+                  alpha("#d95f02",0.9))
   
   #colorblind
   radarchart(dd[,-1],seg=5,pcol=colors_line2,
@@ -135,18 +151,20 @@ library(fmsb)
 read_results <- function(scendir = "~/Dropbox/fluke-mse/07-01/",scen.name="mgmt_scenario_7",
                          fsim = 1) {
   
-# scendir <- "~/Dropbox/fluke-mse/sims/2022-05-24/01-01/"
+# scendir <- "~/Dropbox/fluke-mse/sims/2022-06-10/02-01/"
 # scen.name="MP1"
 # fsim = 1
 
 spawbio <- read.table(paste0(scendir,"spawbio.out"), header = TRUE)
 totcatch <- read.table(paste0(scendir, "totcatch.out"), header = TRUE)
+#sexcatch <- read.table(paste0(scendir, "sexcatch.out"), header = TRUE)
 recoutput <- read.table(paste0(scendir, "recoutput.out"), header = FALSE, skip = 1) #TRUE)
 recoutput2 <- read.table(paste0(scendir, "recoutput2.out"), header = FALSE, skip = 1) #TRUE)
 rbctrack <- read.table(paste0(scendir, "rbctrack.out"), header = FALSE, skip = 1)
 fout <- read.table(paste0(scendir,"frate.out"), header = TRUE)
 names(spawbio) <- str_sub(names(spawbio), start=2)
 names(totcatch) <- str_sub(names(totcatch), start=2)
+#names(sexcatch) <- str_sub(names(sexcatch), start=2)
 names(fout) <- str_sub(names(fout), start=2)
 results <- spawbio %>% 
   as_tibble() %>% 
@@ -168,7 +186,7 @@ res2 <- totcatch %>%
              release_wt = sum(catch*(fleet==4))) %>% 
   #pivot_wider(names_from = fleet, names_glue = "fleet_{fleet}", values_from = catch) %>% 
   I()
-res2
+#res2
 results <- results %>% 
   left_join(res2)
 
@@ -263,6 +281,25 @@ res4 <- fout %>%
 results <- results %>% 
   left_join(res4)
 
+# res5 <- sexcatch %>% 
+#   tibble() %>% 
+#   #rowid_to_column(var = "isim") %>% 
+#   mutate(isim = rep(1:(nrow(.)/4),each=4)) %>% 
+#   rename(fleet = L) %>%
+#   select(isim,everything()) %>% 
+#   pivot_longer(cols= 3:ncol(.), names_to = "year", values_to = "prop_female") %>% 
+#   mutate(year = as.integer(year)) %>% 
+#   filter(fleet == 3) %>% 
+#   select(-fleet) %>% 
+#   # group_by(isim, year) %>% 
+#   # summarize(totcat_wt = sum(catch),
+#   #           prop_fem = sum(catch*(fleet==3)),
+#   #           release_wt = sum(catch*(fleet==4))) %>% 
+#   #pivot_wider(names_from = fleet, names_glue = "fleet_{fleet}", values_from = catch) %>% 
+#   I()
+# res5
+# results <- results %>% 
+#   left_join(res5)
 
 results <- results %>% 
   mutate(scenario = rep(scen.name,nrow(.)),
@@ -277,6 +314,7 @@ get_diag_ts <- function(results) {
   
 diag_ts <- results %>% 
   mutate(keep_to_rel = keep_num/release_num,
+         change_cs = change_cs*-1,
          "kept per trip" = 1000*keep_num/ntrips,
          "F/Fref" = frate/fmsy,
          "B/Bref" = biomass/bmsy,
@@ -292,7 +330,8 @@ diag_ts <- results %>%
          change_cs,
          ntrips,
          keep_one,
-         cs_per_trip
+         cs_per_trip,
+         #prop_female
          ) %>% 
   rename("spawning biomass" = biomass,
          "total catch" = totcat_wt,
@@ -307,7 +346,8 @@ diag_ts <- results %>%
                       change_cs,
                       ntrips,
                       keep_one,
-                      cs_per_trip
+                      cs_per_trip,
+                      #prop_female
                       ),names_to = "type", values_to = "value") %>% 
   I()
  return(diag_ts)
@@ -428,6 +468,40 @@ params <- list(
                  "MP 8"),
   fsim <- rep(1,7))
 
+params <- list(
+  scendir <- c("~/Dropbox/fluke-mse/sims/2022-06-10/02-01/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/02-02/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/02-03/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/02-04/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/02-06/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/02-07/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/02-08/"),
+  scen.name <- c("MP 1",
+                 "MP 2",
+                 "MP 3",
+                 "MP 4",
+                 "MP 6",
+                 "MP 7",
+                 "MP 8"),
+  fsim <- rep(1,7))
+
+params <- list(
+  scendir <- c("~/Dropbox/fluke-mse/sims/2022-06-10/03-01/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/03-02/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/03-03/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/03-04/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/03-06/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/03-07/",
+               "~/Dropbox/fluke-mse/sims/2022-06-10/03-08/"),
+  scen.name <- c("MP 1",
+                 "MP 2",
+                 "MP 3",
+                 "MP 4",
+                 "MP 6",
+                 "MP 7",
+                 "MP 8"),
+  fsim <- rep(1,7))
+
 #summarize the output files
 all_results <- purrr::pmap_dfr(params,read_results)
 #generate time series of metrics
@@ -524,27 +598,38 @@ p2 <- metrics %>%
   theme_bw() +
   theme(legend.position = "bottom",
         axis.text.x = element_blank()) +
-  labs(fill = "")
+  labs(fill = "") +
+  guides(fill = guide_legend(nrow = 1))
 
 # add table summaries
 ggsave("boxplot-metrics.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om2.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om3.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om1-slides.png",p2,width=9,height=5)
+#ggsave("boxplot-metrics-om2-slides.png",p2,width=9,height=5)
+#ggsave("boxplot-metrics-om3-slides.png",p2,width=9,height=5)
 
 median_metrics <- metrics %>% 
   group_by(mp, metric) %>% 
   summarize(value = median(value, na.rm=TRUE))
 
 write_csv(median_metrics,file = "performance-metrics-median-over-sims.csv")
+#write_csv(median_metrics,file = "performance-metrics-median-over-sims-om2.csv")
+#write_csv(median_metrics,file = "performance-metrics-median-over-sims-om3.csv")
 minmax_metrics <- median_metrics %>% 
   group_by(metric) %>% 
   summarize(min_val = min(value),
             max_val = max(value))  
 
 write_csv(minmax_metrics,file = "performance-metrics-minmax-of-medians.csv")
+#write_csv(minmax_metrics,file = "performance-metrics-minmax-of-medians-om2.csv")
+#write_csv(minmax_metrics,file = "performance-metrics-minmax-of-medians-om3.csv")
 
 
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
-  filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
+  #filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
+  filter(!metric %in% c("expense","cs_per_trip","total catch")) %>% 
   do_radar_plot()
 
 
@@ -566,6 +651,135 @@ state_recoutput <- recoutput2 %>%
 return(state_recoutput)
 }
 
+
+get_state_ts <- function(results) {
+  
+  diag_ts <- results %>% 
+    mutate(#keep_to_rel = keep_num/release_num,
+           change_cs = change_cs*-1,
+           #"kept per trip" = 1000*keep_num/ntrips,
+           #"F/Fref" = frate/fmsy,
+           #"B/Bref" = biomass/bmsy,
+           "expense" = cost,
+           cs_per_trip = change_cs/ntrips,
+           #rec_removals = keep_wt + release_wt,
+           keep_one = keep_one/ntrips)  %>% 
+    select(scenario, isim, state, year, 
+           #biomass, 
+           #totcat_wt, 
+           #rec_removals, 
+           #keep_to_rel, 
+           #"kept per trip", #"F/Fref", "B/Bref",
+           mulen_keep,
+           mulen_release,
+           trophy,
+           expense,
+           change_cs,
+           ntrips,
+           keep_one,
+           cs_per_trip,
+           #"kept:released"
+           #prop_female
+    ) %>% 
+    # rename("spawning biomass" = biomass,
+    #        "total catch" = totcat_wt,
+    #        "kept:released" = keep_to_rel) %>% 
+    pivot_longer(cols=c(#"spawning biomass","total catch","kept:released", 
+                        #"kept per trip", 
+                        #"F/Fref", "B/Bref",
+                        #rec_removals,
+                        mulen_keep,
+                        mulen_release,
+                        trophy,
+                        expense,
+                        change_cs,
+                        ntrips,
+                        keep_one,
+                        cs_per_trip,
+                        #"kept:released"
+                        #prop_female
+    ),names_to = "type", values_to = "value") %>% 
+    I()
+  return(diag_ts)
+}
+
+
+
 #generate time series of state metrics
 state_results <- purrr::pmap_dfr(params,read_state_results)
+
+state_metrics <- get_state_ts(state_results) %>% 
+  filter(state!=1) %>% 
+  # mutate(nurow = ifelse(type == "spawning biomass" & value == 0,0,1),
+  #        nurow = ifelse(type == "B/Bref" & value == 0,0,nurow)) %>% 
+  # filter(nurow==1) %>% 
+  # select(-nurow)
+  filter(year >= 2036) %>% 
+  group_by(scenario, type, isim, state) %>% 
+  summarize(#value = case_when(
+    # type == "F/Fref" ~ mean(value<1, na.rm=TRUE),
+    # type == "B/Bref" ~ mean(value>0.5, na.rm=TRUE),
+    #TRUE 
+    value = mean(value, na.rm=TRUE), .groups = "drop") %>% 
+  distinct() %>%  #unsure what is happening, but this helps.
+  rename(metric = type,
+         mp = scenario) #%>% 
+  # mutate(metric = case_when(
+  #   metric == "F/Fref" ~ "not overfishing",
+  #   metric == "B/Bref" ~ "not overfished",
+  #   TRUE ~ metric))
+
+state_metrics$om <- 3
+
+fulL_state_metrics <- fulL_state_metrics %>% 
+  bind_rows(state_metrics)
+
+# add boxplots
+state_bp <- state_metrics %>% 
+  filter(metric %in% c("change_cs")) %>%  #c("kept per trip")) %>% 
+  ggplot() +
+  aes(x = mp, y = value, fill = mp) +
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_brewer(type = "qual", palette = 2) +
+  facet_wrap(~state, scale = "free_y") +
+  #facet_wrap(~metric, scale = "free_y") +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  #ylim(0,5e+06) +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "",
+       title = "change in consumer surplus (welfare)") + #kept per trip") +
+  guides(fill = guide_legend(nrow = 1))
+state_bp
+# add table summaries
+#ggsave("boxplot-metrics-om1-slides.png",p2,width=9,height=5)
+
+
+
+#############  looking across OMs
+
+full_metrics <- readRDS("all_results_medians.rds")
+full_metric_distrib <- readRDS("all_results_distrib.rds")
+
+
+
+summary <- full_metrics %>% 
+  mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
+  group_by(mp, metric) %>% 
+  mutate(val2 = value/max(value, na.rm=TRUE)) %>% 
+  filter(!metric %in% c("total catch", "expense", "cs_per_trip",
+                        "mulen_keep",
+                        "mulen_release",
+                        "not overfished",
+                        "prop_female")) %>% 
+  ggplot() +
+  aes(x = metric, y = val2, col = om, group = mp) +
+  geom_point() +
+  coord_flip() +
+  facet_grid(~mp) +
+  geom_hline(yintercept = 0, lty=2, alpha =0.5)
+summary
 

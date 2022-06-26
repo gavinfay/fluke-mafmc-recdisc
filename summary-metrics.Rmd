@@ -1,0 +1,279 @@
+---
+title: "Fluke MSE performance metrics"
+author: "Gavin Fay"
+date: "2022-06-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(ggdist)
+```
+
+## Read in the results objects
+
+These were created with the `performance-metrics.R` script.
+
+```{r}
+metrics <- readRDS("all_results_distrib.rds")
+median_metrics <- readRDS("all_results_medians.rds")
+state_metrics <- readRDS("full_state_metrics.rds")
+#metrics
+#median_metrics
+#state_metrics
+```
+
+- summary of state metrics
+
+```{r}
+nu_state <- state_metrics %>% 
+  group_by(om, mp, metric, isim) %>% 
+  summarize(value = diff(range(value)),
+            .groups = "drop") %>% 
+  filter(metric %in% c("keep_one","kept:released")) %>% 
+  mutate(metric = case_when(
+    metric == "keep_one" ~ "keep_one_range",
+    metric == "kept:released" ~ "kept:rel_range",
+    TRUE ~ metric
+  )) %>% 
+  I()
+#nu_state
+
+nu_state_medians <- nu_state %>% 
+  group_by(om, mp, metric) %>% 
+  summarize(value = median(value, na.rm=TRUE)) %>% 
+  filter(metric %in% c("keep_one_range","kept:rel_range")) %>% 
+  I()
+
+state_medians <- state_metrics %>% 
+  group_by(om, mp, state, metric) %>% 
+  summarize(value = median(value, na.rm=TRUE)) %>% 
+  I()
+
+
+```
+
+
+- calculate the relative metrics comparing medians
+
+```{r}
+median_metrics <- median_metrics %>% 
+  ungroup() %>% 
+  select(-isim) %>% 
+  bind_rows(nu_state_medians) %>% 
+  I()
+
+mp1_medians <- median_metrics %>% 
+  ungroup() %>% 
+  filter(mp == "MP 1") %>% 
+  select(-mp) %>% 
+  rename("mp1_val" = value) %>% 
+  I()
+#mp1_medians
+
+nu_medians <- median_metrics %>% 
+  ungroup() %>% 
+  left_join(mp1_medians) %>% 
+  mutate(rel_value = value/mp1_val) %>% 
+  I()
+```
+
+- proportion outperforming mp1
+
+
+- create table of all final summary metrics
+
+```{r}
+summary_metrics <- nu_medians %>% 
+  select(om, mp, metric, value) %>% 
+  filter(metric %in% c("keep_one",
+                       "cs_per_trip",
+                       "trophy",
+                       "not overfished",
+                       "not overfishing",
+                       "prop_female",
+                       "change_cs"
+                       )) %>% 
+  I()
+
+summary_rel_metrics <- nu_medians %>% 
+  select(om, mp, metric, rel_value) %>% 
+  filter(metric %in% c("kept per trip",
+                       "keep_one",
+                       "keep_one_range",
+                       "kept:released",
+                       "kept:rel_range",
+                       "spawning biomass",
+                       #relative # of releases per trip compared to mp1
+                       "rec_removals",
+                       "ntrips"
+                       #sales/income/GDP compared to mp1
+                       )) %>% 
+  mutate(metric = case_when(
+    metric == "kept per trip" ~ "kept_per_trip_mp1",
+    metric == "keep_one" ~ "keep_one_mp1",
+    metric == "kept:released" ~ "kept:rel_mp1",
+    metric == "spawning biomass" ~ "ssb_mp1",
+    metric == "rec_removals" ~ "rec_removals_mp1",
+    metric == "ntrips" ~ "ntrips_mp1",
+    metric == "keep_one_range" ~ "keep_one_range_mp1",
+    metric == "kept:rel_range" ~ "kept:rel_range_mp1",
+    TRUE ~ metric)) %>% 
+  rename(value = rel_value) %>% 
+  I()
+
+summary_metrics <- summary_metrics %>%
+  bind_rows(summary_rel_metrics) %>% 
+  I()
+#summary_metrics
+
+```
+
+
+### Metrics by OM & MP
+
+```{r}
+summary <- summary_metrics %>% 
+  mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
+  group_by(mp, metric) %>% 
+  mutate(val2 = value/max(value, na.rm=TRUE)) %>% 
+  # filter(!metric %in% c("total catch", "expense", "cs_per_trip",
+  #                       "mulen_keep",
+  #                       "mulen_release",
+  #                       "not overfished",
+  #                       "prop_female")) %>% 
+  ggplot() +
+  aes(x = metric, y = val2, col = om, group = mp) +
+  geom_point() +
+  coord_flip() +
+  facet_grid(~mp) +
+  geom_hline(yintercept = 0, lty=2, alpha =0.5) +
+  theme(legend.position = "bottom") +
+        #axis.text.y = element_blank()) +
+  guides(fill = guide_legend(nrow = 1))
+summary
+
+```
+
+
+### metrics across MPs for all oms
+```{r}
+p2 <- summary_metrics %>% 
+  mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         metric = factor(metric, levels = c("keep_one",
+                                            "kept_per_trip_mp1",
+                                            "cs_per_trip",
+                                            "trophy",
+                                            "keep_one_mp1",
+                                            "keep_one_range_mp1",
+                                            "kept:rel_mp1",
+                                            "kept:rel_range_mp1",
+                                            "not overfished",
+                                            "not overfishing",
+                                            "ssb_mp1",
+                                            "rel_per_trip_mp1",
+                                            "rec_removals_mp1",
+                                            "prop_female",
+                                            "ntrips_mp1",
+                                            "change_cs"#,
+                                            #"gdp_mp1"
+                                            ))) %>% 
+  #filter(om == 1) %>% 
+  ggplot() +
+  aes(x = mp, y = value, col = mp, shape = om) +
+  #geom_boxplot(outlier.shape=NA) +
+  geom_point() +
+  geom_line(aes(x = mp, y = value, group = om), col = "gray") +
+  geom_point() + 
+  scale_color_brewer(type = "qual", palette = 2) +
+  facet_wrap(~metric, scale = "free_y", drop = F) +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "") +
+  guides(col = guide_legend(nrow = 2),
+         shape = guide_legend(nrow = 2))
+p2
+```
+
+```{r}
+do_state_bp <- function(state_metrics = NULL) {
+  title_metric <- state_metrics$metric[1]
+  state_bp <- state_metrics %>% 
+    #filter(metric %in% c("change_cs")) %>%  #c("kept per trip")) %>% 
+  ggplot() +
+  aes(x = mp, y = value, fill = mp) +
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_brewer(type = "qual", palette = 2) +
+  facet_wrap(~state, scale = "free_y") +
+  #facet_wrap(~metric, scale = "free_y") +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  #ylim(0,5e+06) +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "",
+       title = title_metric) + #kept per trip") +
+  guides(fill = guide_legend(nrow = 1))
+  return(state_bp)
+}
+
+```
+
+
+```{r}
+state_bp <- state_metrics %>% 
+  filter(om == 1) %>% 
+  nest_by(metric,.keep = TRUE) %>% 
+  mutate(bp = list(do_state_bp(data)))
+```
+
+### metrics by state (base om) {.tabset}
+```{r, results = 'asis', echo = FALSE}
+for (i in seq_along(state_bp$metric)){
+  tmp <- state_bp$bp[[i]]
+  cat("####", tmp$data$metric[1], " \n")
+  print(tmp)
+  cat(" \n\n")
+  }
+```
+
+```{r}
+state_bp <- state_metrics %>% 
+  filter(om == 2) %>% 
+  nest_by(metric,.keep = TRUE) %>% 
+  mutate(bp = list(do_state_bp(data)))
+```
+
+### metrics by state (MRIP bias) {.tabset}
+```{r, results = 'asis', echo = FALSE}
+for (i in seq_along(state_bp$metric)){
+  tmp <- state_bp$bp[[i]]
+  cat("####", tmp$data$metric[1], " \n")
+  print(tmp)
+  cat(" \n\n")
+  }
+```
+
+```{r}
+state_bp <- state_metrics %>% 
+  filter(om == 3) %>% 
+  nest_by(metric,.keep = TRUE) %>% 
+  mutate(bp = list(do_state_bp(data)))
+```
+
+### metrics by state (distribution shift) {.tabset}
+```{r, results = 'asis', echo = FALSE}
+for (i in seq_along(state_bp$metric)){
+  tmp <- state_bp$bp[[i]]
+  cat("####", tmp$data$metric[1], " \n")
+  print(tmp)
+  cat(" \n\n")
+  }
+```
