@@ -37,3 +37,13 @@ Crosswalking labels in tibbles with the performance metrics
 | ntrips                                              | \# of trips (millions)                                       |
 | change_cs                                           | % change Consumer surplus (all trips)                        |
 | expense                                             | % change Fishery investment                                  |
+
+### Results objects
+
+The following files contain the performance metrics results:
+
+-   `all_results_medians.rds` : the median (over simulations) value for performance metrics for each OM and MP
+
+-   `all_results_distrib.rds`: the values for performance metrics for each simulation for all OMs & MPs
+
+-   `full_state_metrics.rds`: the values for performance metrics for each simulation for all OMs & MPs for each of the nine states.
