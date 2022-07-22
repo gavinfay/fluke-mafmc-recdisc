@@ -250,9 +250,10 @@ results <- results %>%
 
 diag_ts <- results %>% 
   mutate(keep_to_rel = keep/release,
-         "kept per trip" = keep/trips,
+         "kept per trip" = 1000*keep/trips,
          "F/Fref" = frate/fref,
-         "B/Bref" = biomass/bref)  %>% 
+         "B/Bref" = biomass/bref,
+         biomass = 2*biomass)  %>% 
   select(scenario, isim, year, biomass, catch, keep_to_rel, "kept per trip", "F/Fref", "B/Bref") %>% 
   rename("spawning biomass" = biomass,
          "total catch" = catch,
@@ -263,8 +264,10 @@ diag_ts <- results %>%
 
 
 # time series plots
-diag_ts %>% 
-  filter(year != 2019) %>% 
+p1 <- diag_ts %>% 
+  filter(year != 2019,
+         type != "B/Bref") %>% 
+  mutate(type = fct_relevel(type,c("spawning biomass", "total catch"))) %>% 
   projection.plot()
 
 # join ref pts & F
@@ -272,7 +275,7 @@ diag_ts %>%
 # add additional metrics
 
 # add boxplots
-diag_ts %>% 
+p2 <- diag_ts %>% 
   filter(year >= 2022) %>% 
   ggplot() +
   aes(x = scenario, y = value, fill = scenario) +
@@ -289,7 +292,7 @@ diag_ts %>%
 # add table summaries
 
 # radar chart
-diag_ts %>% 
+p3 <- diag_ts %>% 
   filter(year >= 2022) %>% 
   group_by(scenario, type) %>% 
   summarize(value = case_when(
@@ -306,3 +309,46 @@ diag_ts %>%
   select(metric,value,mp) %>% 
   do_radar_plot()
 
+ggsave("trajectory-comparisons.png",p1,width=8,height=8)
+ggsave("boxplot-comparisons.png",p2,width=8,height=8)
+ggsave("radarplot-comparisons.png",p3,width=8,height=8)
+
+## table info
+
+table_out1 <- diag_ts %>% 
+  filter(year >= 2022) %>% 
+  group_by(scenario, type) %>% 
+  summarize(value = case_when(
+    type == "F/Fref" ~ mean(value<1),
+    type == "B/Bref" ~ mean(value>0.5),
+    TRUE ~ median(value))) %>% 
+  distinct() %>%  #unsure what is happening, but this helps.
+  rename(metric = type,
+         mp = scenario) %>% 
+  mutate(metric = case_when(
+    metric == "F/Fref" ~ "P(not overfishing)",
+    metric == "B/Bref" ~ "P(not overfished)",
+    TRUE ~ metric)) %>% 
+  select(metric,value,mp)
+
+table_out2 <- diag_ts %>% 
+  filter(year >= 2022) %>% 
+  group_by(scenario, type, isim) %>% 
+  summarize(value = case_when(
+    type == "F/Fref" ~ mean(value<1),
+    type == "B/Bref" ~ mean(value>0.5),
+    TRUE ~ median(value)), .groups = "drop") %>% 
+  distinct() %>%  #unsure what is happening, but this helps.
+  rename(metric = type,
+         mp = scenario) %>% 
+  mutate(metric = case_when(
+    metric == "F/Fref" ~ "P(not overfishing)",
+    metric == "B/Bref" ~ "P(not overfished)",
+    TRUE ~ metric)) %>% 
+  select(metric,value,mp) %>% 
+  group_by(metric) %>% 
+  summarize(min_val = min(value),
+            max_val = max(value))
+
+write_csv(table_out1,file = "performance-metrics-median-over-sims.csv")
+write_csv(table_out2,file = "performance-metrics-minmax-of-sims.csv")

@@ -277,3 +277,72 @@ for (i in seq_along(state_bp$metric)){
   cat(" \n\n")
   }
 ```
+
+
+### how many states do better than MP1?
+```{r}
+state_medians <- state_metrics %>% 
+  group_by(om, mp, metric, state) %>% 
+  summarize(value = median(value, na.rm=TRUE)) %>% 
+  ungroup()
+
+mp1 <- state_medians %>% 
+  filter(mp == "MP 1") %>% 
+  mutate(mp1_val = value) %>% 
+  select(metric, mp1_val, om, state)
+  
+beat_mp1 <- state_medians %>% 
+  #filter(mp != "MP 1") %>% 
+  left_join(mp1) %>% 
+  mutate(beat_mp1 = ifelse(value > mp1_val, 1,0)) %>% 
+  group_by(om, mp, metric) %>% 
+  summarize(nbeat = sum(beat_mp1, na.rm=TRUE))
+beat_mp1
+
+```
+
+```{r}
+nbeat_plot <- beat_mp1 %>% 
+  mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         mp = fct_expand(mp,"MP 1"),
+         mp = fct_relevel(mp, "MP 1")) %>% 
+  ggplot() +
+  aes(x = mp, y = nbeat, col = mp, shape = om) +
+  #geom_boxplot(outlier.shape=NA) +
+  geom_point() +
+  geom_line(aes(x = mp, y = nbeat, group = om), col = "gray") +
+  scale_color_brewer(type = "qual", palette = 2) +
+  facet_wrap(~metric, drop = F) +
+  ylab("") +
+  xlab("") +
+  ylim(0,10) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "") +
+  guides(col = guide_legend(nrow = 2),
+         shape = guide_legend(nrow = 2))
+nbeat_plot
+ggsave("outputs/plots/nstates_beat_mp1.png",nbeat_plot,width=9,height=5)
+```
+
+
+```{r}
+mp1 <- state_metrics %>% 
+  filter(mp == "MP 1") %>% 
+  mutate(mp1_val = value) %>% 
+  select(metric, mp1_val, om, isim, state)
+  
+beat_mp1 <- state_metrics %>% 
+  filter(mp != "MP 1") %>% 
+  left_join(mp1) %>% 
+  mutate(beat_mp1 = ifelse(value > mp1_val, 1,0)) %>% 
+  group_by(om, mp, metric, state) %>% 
+  summarize(prop = mean(beat_mp1, na.rm=TRUE))
+
+beat_mp1
+  
+  
+```
+
