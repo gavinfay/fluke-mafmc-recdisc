@@ -1,7 +1,7 @@
 ---
 title: "Fluke MSE performance metrics"
 author: "Gavin Fay"
-date: "2022-06-26"
+date: "2022-07-25"
 output: html_document
 ---
 
@@ -40,6 +40,9 @@ nu_state <- state_metrics %>%
   I()
 #nu_state
 
+metrics <- metrics %>% 
+  bind_rows(nu_state)
+
 nu_state_medians <- nu_state %>% 
   group_by(om, mp, metric) %>% 
   summarize(value = median(value, na.rm=TRUE)) %>% 
@@ -75,6 +78,22 @@ mp1_medians <- median_metrics %>%
 nu_medians <- median_metrics %>% 
   ungroup() %>% 
   left_join(mp1_medians) %>% 
+  mutate(rel_value = value/mp1_val) %>% 
+  I()
+```
+- calculate the relative metrics 
+
+```{r}
+mp1_metrics <- metrics %>% 
+  ungroup() %>% 
+  filter(mp == "MP 1") %>% 
+  select(-mp) %>% 
+  rename("mp1_val" = value) %>% 
+  I()
+
+nu_metrics <- metrics %>% 
+  ungroup() %>% 
+  left_join(mp1_metrics) %>% 
   mutate(rel_value = value/mp1_val) %>% 
   I()
 ```
@@ -130,6 +149,53 @@ summary_metrics <- summary_metrics %>%
 
 ```
 
+- create table of all final metrics
+
+```{r}
+metrics <- nu_metrics %>% 
+  select(om, mp, metric, isim, value) %>% 
+  filter(metric %in% c("keep_one",
+                       "cs_per_trip",
+                       "trophy",
+                       "not overfished",
+                       "not overfishing",
+                       "prop_female",
+                       "change_cs"
+                       )) %>% 
+  I()
+
+rel_metrics <- nu_metrics %>% 
+  select(om, mp, metric, isim, rel_value) %>% 
+  filter(metric %in% c("kept per trip",
+                       "keep_one",
+                       "keep_one_range",
+                       "kept:released",
+                       "kept:rel_range",
+                       "spawning biomass",
+                       #relative # of releases per trip compared to mp1
+                       "rec_removals",
+                       "ntrips"
+                       #sales/income/GDP compared to mp1
+                       )) %>% 
+  mutate(metric = case_when(
+    metric == "kept per trip" ~ "kept_per_trip_mp1",
+    metric == "keep_one" ~ "keep_one_mp1",
+    metric == "kept:released" ~ "kept:rel_mp1",
+    metric == "spawning biomass" ~ "ssb_mp1",
+    metric == "rec_removals" ~ "rec_removals_mp1",
+    metric == "ntrips" ~ "ntrips_mp1",
+    metric == "keep_one_range" ~ "keep_one_range_mp1",
+    metric == "kept:rel_range" ~ "kept:rel_range_mp1",
+    TRUE ~ metric)) %>% 
+  rename(value = rel_value) %>% 
+  I()
+
+metrics <- metrics %>%
+  bind_rows(rel_metrics) %>% 
+  I()
+#summary_metrics
+
+```
 
 ### Metrics by OM & MP
 
@@ -163,6 +229,15 @@ summary
 p2 <- summary_metrics %>% 
   mutate(om = factor(om),
          om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         mp2 = fct_recode(mp,
+                          "status quo" = "MP 1",
+                          "minsize-1" = "MP 2", 
+                          "season" = "MP 3", 
+                          "region" = "MP 4",
+                          #"c1@14" = "MP 5", 
+                          "c3@17" = "MP 6",
+                          "c1@16-19" = "MP 7",
+                          "slot" = "MP 8"),
          metric = factor(metric, levels = c("keep_one",
                                             "kept_per_trip_mp1",
                                             "cs_per_trip",
@@ -183,10 +258,10 @@ p2 <- summary_metrics %>%
                                             ))) %>% 
   #filter(om == 1) %>% 
   ggplot() +
-  aes(x = mp, y = value, col = mp, shape = om) +
+  aes(x = mp2, y = value, col = mp2, shape = om) +
   #geom_boxplot(outlier.shape=NA) +
   geom_point() +
-  geom_line(aes(x = mp, y = value, group = om), col = "gray") +
+  geom_line(aes(x = mp2, y = value, group = om), col = "gray") +
   geom_point() + 
   scale_color_brewer(type = "qual", palette = 2) +
   facet_wrap(~metric, scale = "free_y", drop = F) +
@@ -195,11 +270,130 @@ p2 <- summary_metrics %>%
   theme_bw() +
   theme(legend.position = "bottom",
         axis.text.x = element_blank()) +
-  labs(fill = "") +
+  labs(fill = "",
+       col = "") +
   guides(col = guide_legend(nrow = 2),
          shape = guide_legend(nrow = 2))
+ggsave("outputs/plots/median-metrics-alloms-slides.png",p2,width=9,height=5)
 p2
 ```
+
+### Boxplots of metrics for each OM
+
+First define plotting cateogrical values
+```{r}
+metrics2 <- metrics %>% 
+  mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         mp2 = fct_recode(mp,
+                          "status quo" = "MP 1",
+                          "minsize-1" = "MP 2", 
+                          "season" = "MP 3", 
+                          "region" = "MP 4",
+                          #"c1@14" = "MP 5", 
+                          "c3@17" = "MP 6",
+                          "c1@16-19" = "MP 7",
+                          "slot" = "MP 8"),
+         metric = factor(metric, levels = c("keep_one",
+                                            "kept_per_trip_mp1",
+                                            "cs_per_trip",
+                                            "trophy",
+                                            "keep_one_mp1",
+                                            "keep_one_range_mp1",
+                                            "kept:rel_mp1",
+                                            "kept:rel_range_mp1",
+                                            "not overfished",
+                                            "not overfishing",
+                                            "ssb_mp1",
+                                            "rel_per_trip_mp1",
+                                            "rec_removals_mp1",
+                                            "prop_female",
+                                            "ntrips_mp1",
+                                            "change_cs"#,
+                                            #"gdp_mp1"
+                                            ))) 
+
+```
+
+
+#### Base Operating Model
+```{r}
+# add boxplots
+p2 <- metrics2 %>% 
+  filter(om == "base") %>% 
+  ggplot() +
+  aes(x = mp2, y = value, fill = mp2) +
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_brewer(type = "qual", palette = 2) +
+  facet_wrap(~metric, scale = "free_y", drop = F) +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "",
+       subtitle = "Base scenario") +
+  guides(fill = guide_legend(nrow = 1))
+# add table summaries
+#ggsave("boxplot-metrics.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om2.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om3.png",p2,width=8,height=8)
+ggsave("outputs/plots/boxplot-metrics-om1-slides.png",p2,width=9,height=5)
+p2
+```
+#### MRIP bias Operating Model
+```{r}
+# add boxplots
+p2 <- metrics2 %>% 
+  filter(om == "MRIP bias") %>% 
+  ggplot() +
+  aes(x = mp2, y = value, fill = mp2) +
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_brewer(type = "qual", palette = 2) +
+  facet_wrap(~metric, scale = "free_y", drop = F) +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "",
+       subtitle = "MRIP bias scenario") +
+  guides(fill = guide_legend(nrow = 1))
+# add table summaries
+#ggsave("boxplot-metrics.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om2.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om3.png",p2,width=8,height=8)
+ggsave("outputs/plots/boxplot-metrics-om2-slides.png",p2,width=9,height=5)
+p2
+```
+
+#### Distribution Shift Operating Model
+```{r}
+# add boxplots
+p2 <- metrics2 %>% 
+  filter(om == "shift") %>% 
+  ggplot() +
+  aes(x = mp2, y = value, fill = mp2) +
+  geom_boxplot(outlier.shape=NA) +
+  scale_fill_brewer(type = "qual", palette = 2) +
+  facet_wrap(~metric, scale = "free_y", drop = F) +
+  ylab("") +
+  xlab("") +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_blank()) +
+  labs(fill = "",
+       subtitle = "Distribution shift scenario") +
+  guides(fill = guide_legend(nrow = 1))
+# add table summaries
+#ggsave("boxplot-metrics.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om2.png",p2,width=8,height=8)
+#ggsave("boxplot-metrics-om3.png",p2,width=8,height=8)
+ggsave("outputs/plots/boxplot-metrics-om3-slides.png",p2,width=9,height=5)
+p2
+```
+
+### State level metrics
 
 ```{r}
 do_state_bp <- function(state_metrics = NULL) {

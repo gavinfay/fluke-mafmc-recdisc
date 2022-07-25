@@ -452,55 +452,55 @@ diag_ts <- results %>%
 #   fsim <- c(1, 1, 1, 26, 51,26, 51, 26, 51,76,76,76, 1, 26, 1, 26, 1, 26))
 
 params <- list(
-  scendir <- c("~/Dropbox/fluke-mse/sims/2022-05-24/01-01/",
+  scendir = c("~/Dropbox/fluke-mse/sims/2022-05-24/01-01/",
                "~/Dropbox/fluke-mse/sims/2022-05-24/01-02/",
                "~/Dropbox/fluke-mse/sims/2022-05-24/01-03/",
                "~/Dropbox/fluke-mse/sims/2022-05-24/01-04/",
                "~/Dropbox/fluke-mse/sims/2022-05-24/01-06/",
                "~/Dropbox/fluke-mse/sims/2022-05-24/01-07/",
                "~/Dropbox/fluke-mse/sims/2022-05-24/01-08/"),
-  scen.name <- c("MP 1",
+  scen.name = c("MP 1",
                  "MP 2",
                  "MP 3",
                  "MP 4",
                  "MP 6",
                  "MP 7",
                  "MP 8"),
-  fsim <- rep(1,7))
+  fsim = rep(1,7))
 
 params <- list(
-  scendir <- c("~/Dropbox/fluke-mse/sims/2022-06-10/02-01/",
+  scendir = c("~/Dropbox/fluke-mse/sims/2022-06-10/02-01/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/02-02/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/02-03/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/02-04/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/02-06/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/02-07/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/02-08/"),
-  scen.name <- c("MP 1",
+  scen.name = c("MP 1",
                  "MP 2",
                  "MP 3",
                  "MP 4",
                  "MP 6",
                  "MP 7",
                  "MP 8"),
-  fsim <- rep(1,7))
+  fsim = rep(1,7))
 
 params <- list(
-  scendir <- c("~/Dropbox/fluke-mse/sims/2022-06-10/03-01/",
+  scendir = c("~/Dropbox/fluke-mse/sims/2022-06-10/03-01/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/03-02/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/03-03/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/03-04/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/03-06/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/03-07/",
                "~/Dropbox/fluke-mse/sims/2022-06-10/03-08/"),
-  scen.name <- c("MP 1",
+  scen.name = c("MP 1",
                  "MP 2",
                  "MP 3",
                  "MP 4",
                  "MP 6",
                  "MP 7",
                  "MP 8"),
-  fsim <- rep(1,7))
+  fsim = rep(1,7))
 
 #summarize the output files
 all_results <- purrr::pmap_dfr(params,read_results)
