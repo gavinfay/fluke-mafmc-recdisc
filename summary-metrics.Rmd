@@ -9,22 +9,142 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(ggdist)
+library(scales)
+library(fmsb)
 ```
 
-## Read in the results objects
+#### Read in the results objects
 
 These were created with the `performance-metrics.R` script.
 
 ```{r}
 metrics <- readRDS("all_results_distrib.rds")
 median_metrics <- readRDS("all_results_medians.rds")
+#metrics <- readRDS("metrics.rds")
+#median_metrics <- readRDS("median_metrics.rds")
 state_metrics <- readRDS("full_state_metrics.rds")
 #metrics
 #median_metrics
 #state_metrics
 ```
 
-- summary of state metrics
+```{r}
+# add radar plot
+do_small_radar_plot <- function(metrics) {
+  # metrics is a dataframe of metrics, expecting columns
+  # metrics <- tibble(metric = rep(letters[1:5],each=3),
+  #                   value = runif(15),
+  #                   mp = as.character(rep(1:3,5)))
+  # # metric 
+  # # value
+  # # mp (management procedure)
+  summaries <- metrics %>% 
+    group_by(metric) %>% 
+    summarize(min = min(value, na.rm = TRUE),
+              max = max(value, na.rm = TRUE)) %>% 
+    #pivot_longer(cols = c(2:3),names_to = "mp",
+    #             values_to = "value") %>% 
+    #pivot_wider(names_from = metric, values_from = value) %>% 
+    #arrange(desc(mp)) %>% 
+    I()
+  #summaries  
+  nmetrics <- length(unique(metrics$metric))
+  nmp <- length(unique(metrics$mp))
+  
+  d <- metrics %>% 
+    group_by(mp) %>% 
+    left_join(summaries) %>% 
+    mutate(value = value/(max + 1e-08)) %>% 
+    select(mp, metric, value) %>% 
+    pivot_wider(names_from = metric, values_from = value) %>% 
+    ungroup()
+  
+  bounds <- tibble(mp = c("max","min"),
+                   #"spawning biomass" = c(1,0),
+                   #"total catch" = c(1,0),
+                   "kept:released" = c(1,0),
+                   "kept per trip" = c(1,0),
+                   "not overfishing" = c(1,0),
+                   "not overfished" = c(1,0),
+                   "change_cs" = c(1,0),
+                   #"mulen_keep" = c(1,0),
+                   #"mulen_release" = c(1,0),
+                   #"trophy" = c(1,0),
+                   #"rec_removals" = c(1,0),
+                   "keep_one" = c(1,0)) #,
+                   #"prop_female" = c(1,0),
+                   #"ntrips" = c(1,0)) #,
+  #filter(metric %in% c("change_cs", "kept per trip", "kept:released", "not overfished", "not overfishing")) %>% 
+  #d = c(1,0),
+  #e = c(1,0))
+  
+  dd <- bounds %>% 
+    bind_rows(d)
+  
+  #NEW PLOT
+  #colorblind colors
+  colors_fill2<-c(alpha("#000000",0.1),
+                  alpha("#E69F00",0.1),
+                  alpha("#56B4E9",0.1),
+                  alpha("#009E73",0.1),
+                  alpha("#F0E442",0.1),
+                  alpha("#E69F00",0.1),
+                  alpha("#56B4E9",0.1),
+                  alpha("#009E73",0.1))
+  colors_line2<-c(alpha("#000000",0.9),
+                  alpha("#E69F00",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#009E73",0.9),
+                  alpha("#F0E442",0.9),
+                  alpha("#E69F00",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#009E73",0.9))
+  colors_line2<-c(alpha("#1b9e77",0.9),
+                  alpha("#d95f02",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#dc14cf",0.9),
+                  #alpha("#009E73",0.9),
+                  alpha("#F0E442",0.9),
+                  alpha("#E69F00",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#009E73",0.9))
+  
+  colors_fill2<-c(alpha("#1b9e77",0.1),
+                  alpha("#d95f02",0.1),
+                  alpha("#7570b3",0.1),
+                  alpha("#e7298a",0.1),
+                  alpha("#66a61e",0.1),
+                  alpha("#e6ab02",0.1),
+                  alpha("#a6761d",0.1),
+                  alpha("#d95f02",0.1))
+  
+  colors_line2<-c(alpha("#1b9e77",0.9),
+                  alpha("#d95f02",0.9),
+                  alpha("#7570b3",0.9),
+                  alpha("#e7298a",0.9),
+                  alpha("#66a61e",0.9),
+                  alpha("#e6ab02",0.9),
+                  alpha("#a6761d",0.9),
+                  alpha("#d95f02",0.9))
+  
+  #colorblind
+  radarchart(dd[,-1],seg=5,pcol=colors_line2,
+             pfcol=colors_fill2,plwd=2,
+             vlabels=names(dd)[-1], vlcex=0.8,
+             plty=c(rep(1,7),rep(2,7)),
+             pdensity=0)
+  rows<<-rownames(dd[-c(1,2),])
+  colors_line<<-colors_line2
+  legend("bottomright",inset=0,title ="",title.adj = 0.2,
+         legend=unique(d$mp),
+         pch=16,
+         col=colors_line2[1:nmp],
+         lty=1, cex=0.8, bty= 'n', y.intersp=1)
+  
+}
+
+```
+
 
 ```{r}
 nu_state <- state_metrics %>% 
@@ -278,9 +398,8 @@ ggsave("outputs/plots/median-metrics-alloms-slides.png",p2,width=9,height=5)
 p2
 ```
 
-### Boxplots of metrics for each OM
+### Base Operating Model Scenario
 
-First define plotting cateogrical values
 ```{r}
 metrics2 <- metrics %>% 
   mutate(om = factor(om),
@@ -316,7 +435,6 @@ metrics2 <- metrics %>%
 ```
 
 
-#### Base Operating Model
 ```{r}
 # add boxplots
 p2 <- metrics2 %>% 
@@ -341,7 +459,31 @@ p2 <- metrics2 %>%
 ggsave("outputs/plots/boxplot-metrics-om1-slides.png",p2,width=9,height=5)
 p2
 ```
-#### MRIP bias Operating Model
+
+#### Tradeoffs among key metrics for the base operating model scenario
+```{r}
+# radar chart - not sure how to save this to file automagically
+p3 <- median_metrics %>% 
+  mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
+  filter(om == "base") %>% 
+  mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>% 
+  #filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
+  #filter(!metric %in% c("expense","cs_per_trip","total catch")) %>% 
+  filter(metric %in% c("change_cs", "kept per trip", "kept:released", "not overfished", "not overfishing", "keep_one")) %>% 
+  do_small_radar_plot()
+
+```
+
+### MRIP bias Operating Model
 ```{r}
 # add boxplots
 p2 <- metrics2 %>% 
@@ -366,8 +508,32 @@ p2 <- metrics2 %>%
 ggsave("outputs/plots/boxplot-metrics-om2-slides.png",p2,width=9,height=5)
 p2
 ```
+#### Tradeoffs among key metrics for the MRIP bias operating model scenario
+```{r}
+# radar chart - not sure how to save this to file automagically
+p3 <- median_metrics %>% 
+    mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
+  filter(om == "MRIP bias") %>% 
+  mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>% 
+  #filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
+  #filter(!metric %in% c("expense","cs_per_trip","total catch")) %>% 
+  filter(metric %in% c("change_cs", "kept per trip", "kept:released", "not overfished", "not overfishing",
+                       "keep_one")) %>% 
+  do_small_radar_plot()
 
-#### Distribution Shift Operating Model
+```
+
+
+### Distribution Shift Operating Model
 ```{r}
 # add boxplots
 p2 <- metrics2 %>% 
@@ -392,6 +558,30 @@ p2 <- metrics2 %>%
 ggsave("outputs/plots/boxplot-metrics-om3-slides.png",p2,width=9,height=5)
 p2
 ```
+#### Tradeoffs among key metrics for the distribution shift operating model scenario
+```{r}
+# radar chart - not sure how to save this to file automagically
+p3 <- median_metrics %>% 
+    mutate(om = factor(om),
+         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
+  filter(om == "shift") %>% 
+  mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>% 
+  #filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
+  #filter(!metric %in% c("expense","cs_per_trip","total catch")) %>% 
+  filter(metric %in% c("change_cs", "kept per trip", "kept:released", "not overfished", "not overfishing",
+                       "keep_one")) %>% 
+  do_small_radar_plot()
+
+```
+
 
 ### State level metrics
 
@@ -421,14 +611,24 @@ do_state_bp <- function(state_metrics = NULL) {
 ```
 
 
+<!-- #### State-by-state metrics for the Base Operating Model scenario -->
 ```{r}
 state_bp <- state_metrics %>% 
   filter(om == 1) %>% 
+   mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>% 
   nest_by(metric,.keep = TRUE) %>% 
   mutate(bp = list(do_state_bp(data)))
 ```
 
-### metrics by state (base om) {.tabset}
+#### State-by-state metrics for the Base Operating Model scenario {.tabset}
 ```{r, results = 'asis', echo = FALSE}
 for (i in seq_along(state_bp$metric)){
   tmp <- state_bp$bp[[i]]
@@ -441,11 +641,20 @@ for (i in seq_along(state_bp$metric)){
 ```{r}
 state_bp <- state_metrics %>% 
   filter(om == 2) %>% 
+   mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>%   
   nest_by(metric,.keep = TRUE) %>% 
   mutate(bp = list(do_state_bp(data)))
 ```
 
-### metrics by state (MRIP bias) {.tabset}
+#### State-by-state metrics for the MRIP Bias Operating Model scenario {.tabset}
 ```{r, results = 'asis', echo = FALSE}
 for (i in seq_along(state_bp$metric)){
   tmp <- state_bp$bp[[i]]
@@ -458,11 +667,20 @@ for (i in seq_along(state_bp$metric)){
 ```{r}
 state_bp <- state_metrics %>% 
   filter(om == 3) %>% 
+   mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>%   
   nest_by(metric,.keep = TRUE) %>% 
   mutate(bp = list(do_state_bp(data)))
 ```
 
-### metrics by state (distribution shift) {.tabset}
+#### State-by-state metrics for the Distribution Shift Operating Model scenario {.tabset}
 ```{r, results = 'asis', echo = FALSE}
 for (i in seq_along(state_bp$metric)){
   tmp <- state_bp$bp[[i]]
@@ -473,7 +691,7 @@ for (i in seq_along(state_bp$metric)){
 ```
 
 
-### how many states do better than MP1?
+#### How many states do better than the status quo management alternative?
 ```{r}
 state_medians <- state_metrics %>% 
   group_by(om, mp, metric, state) %>% 

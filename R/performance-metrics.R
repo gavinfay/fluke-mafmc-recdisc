@@ -1,7 +1,7 @@
 #projection plot
 projection.plot <- function(project.results) {
   project.results <- project.results %>% 
-    #filter(type %in% c("biomass","catch")) %>% 
+    #filter(type %in% c("biomass","catch")) %>%
     I()
   project.results %>% 
     #group_by(scenario, type, year) %>% 
@@ -139,6 +139,121 @@ do_radar_plot <- function(metrics) {
   
 }
 
+
+# add radar plot
+do_small_radar_plot <- function(metrics) {
+  # metrics is a dataframe of metrics, expecting columns
+  # metrics <- tibble(metric = rep(letters[1:5],each=3),
+  #                   value = runif(15),
+  #                   mp = as.character(rep(1:3,5)))
+  # # metric 
+  # # value
+  # # mp (management procedure)
+  summaries <- metrics %>% 
+    group_by(metric) %>% 
+    summarize(min = min(value, na.rm = TRUE),
+              max = max(value, na.rm = TRUE)) %>% 
+    #pivot_longer(cols = c(2:3),names_to = "mp",
+    #             values_to = "value") %>% 
+    #pivot_wider(names_from = metric, values_from = value) %>% 
+    #arrange(desc(mp)) %>% 
+    I()
+  #summaries  
+  nmetrics <- length(unique(metrics$metric))
+  nmp <- length(unique(metrics$mp))
+  
+  d <- metrics %>% 
+    group_by(mp) %>% 
+    left_join(summaries) %>% 
+    mutate(value = value/(max + 1e-08)) %>% 
+    select(mp, metric, value) %>% 
+    pivot_wider(names_from = metric, values_from = value) %>% 
+    ungroup()
+  
+  bounds <- tibble(mp = c("max","min"),
+                   #"spawning biomass" = c(1,0),
+                   #"total catch" = c(1,0),
+                   "kept:released" = c(1,0),
+                   "kept per trip" = c(1,0),
+                   "not overfishing" = c(1,0),
+                   "not overfished" = c(1,0),
+                   "change_cs" = c(1,0),
+                   #"mulen_keep" = c(1,0),
+                   #"mulen_release" = c(1,0),
+                   #"trophy" = c(1,0),
+                   #"rec_removals" = c(1,0),
+                   "keep_one" = c(1,0)) #,
+                   #"prop_female" = c(1,0),
+                   #"ntrips" = c(1,0)) #,
+  #filter(metric %in% c("change_cs", "kept per trip", "kept:released", "not overfished", "not overfishing")) %>% 
+  #d = c(1,0),
+  #e = c(1,0))
+  
+  dd <- bounds %>% 
+    bind_rows(d)
+  
+  #NEW PLOT
+  #colorblind colors
+  colors_fill2<-c(alpha("#000000",0.1),
+                  alpha("#E69F00",0.1),
+                  alpha("#56B4E9",0.1),
+                  alpha("#009E73",0.1),
+                  alpha("#F0E442",0.1),
+                  alpha("#E69F00",0.1),
+                  alpha("#56B4E9",0.1),
+                  alpha("#009E73",0.1))
+  colors_line2<-c(alpha("#000000",0.9),
+                  alpha("#E69F00",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#009E73",0.9),
+                  alpha("#F0E442",0.9),
+                  alpha("#E69F00",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#009E73",0.9))
+  colors_line2<-c(alpha("#1b9e77",0.9),
+                  alpha("#d95f02",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#dc14cf",0.9),
+                  #alpha("#009E73",0.9),
+                  alpha("#F0E442",0.9),
+                  alpha("#E69F00",0.9),
+                  alpha("#56B4E9",0.9),
+                  alpha("#009E73",0.9))
+  
+  colors_fill2<-c(alpha("#1b9e77",0.1),
+                  alpha("#d95f02",0.1),
+                  alpha("#7570b3",0.1),
+                  alpha("#e7298a",0.1),
+                  alpha("#66a61e",0.1),
+                  alpha("#e6ab02",0.1),
+                  alpha("#a6761d",0.1),
+                  alpha("#d95f02",0.1))
+  
+  colors_line2<-c(alpha("#1b9e77",0.9),
+                  alpha("#d95f02",0.9),
+                  alpha("#7570b3",0.9),
+                  alpha("#e7298a",0.9),
+                  alpha("#66a61e",0.9),
+                  alpha("#e6ab02",0.9),
+                  alpha("#a6761d",0.9),
+                  alpha("#d95f02",0.9))
+  
+  #colorblind
+  radarchart(dd[,-1],seg=5,pcol=colors_line2,
+             pfcol=colors_fill2,plwd=2,
+             vlabels=names(dd)[-1], vlcex=0.8,
+             plty=c(rep(1,7),rep(2,7)),
+             pdensity=0)
+  rows<<-rownames(dd[-c(1,2),])
+  colors_line<<-colors_line2
+  legend("bottomright",inset=0,title ="",title.adj = 0.2,
+         legend=unique(d$mp),
+         pch=16,
+         col=colors_line2[1:nmp],
+         lty=1, cex=0.8, bty= 'n', y.intersp=1)
+  
+}
+
 #
 library(tidyverse)
 library(ggdist)
@@ -149,22 +264,24 @@ library(fmsb)
 ### general scenario
 ### 
 read_results <- function(scendir = "~/Dropbox/fluke-mse/07-01/",scen.name="mgmt_scenario_7",
+                         om.name = 1,
                          fsim = 1) {
   
-# scendir <- "~/Dropbox/fluke-mse/sims/2022-06-10/02-01/"
-# scen.name="MP1"
-# fsim = 1
+ scendir <- "~/Dropbox/fluke-mse/sims/2022-07-25/01-01/"
+ scen.name="MP 1"
+ om.name = 1
+ fsim = 1
 
 spawbio <- read.table(paste0(scendir,"spawbio.out"), header = TRUE)
 totcatch <- read.table(paste0(scendir, "totcatch.out"), header = TRUE)
-#sexcatch <- read.table(paste0(scendir, "sexcatch.out"), header = TRUE)
+sexcatch <- read.table(paste0(scendir, "sexcatch.out"), header = TRUE)
 recoutput <- read.table(paste0(scendir, "recoutput.out"), header = FALSE, skip = 1) #TRUE)
 recoutput2 <- read.table(paste0(scendir, "recoutput2.out"), header = FALSE, skip = 1) #TRUE)
 rbctrack <- read.table(paste0(scendir, "rbctrack.out"), header = FALSE, skip = 1)
 fout <- read.table(paste0(scendir,"frate.out"), header = TRUE)
 names(spawbio) <- str_sub(names(spawbio), start=2)
 names(totcatch) <- str_sub(names(totcatch), start=2)
-#names(sexcatch) <- str_sub(names(sexcatch), start=2)
+names(sexcatch) <- str_sub(names(sexcatch), start=2)
 names(fout) <- str_sub(names(fout), start=2)
 results <- spawbio %>% 
   as_tibble() %>% 
@@ -228,8 +345,10 @@ nyrs <- length(unique(recoutput2[,2]))
 # recoutput2 <-  temp %>% 
 #   slice((1:(nsim*nyrs*10)))
 recoutput2[,1] <- rep(1:100, each = 10*nyrs)
-names(recoutput2) <- c("isim","year","state","ntrips","nchoice","change_cs","cost",
-                       "keep_one", "mulen_keep","mulen_release","trophy")
+ names(recoutput2) <- c("isim","year","state","n_keep","n_release","ntrips","nchoice","change_cs","cost",
+                        "keep_one", "mulen_keep","mulen_release","trophy")
+#names(recoutput2) <- c("isim","year","state","ntrips","nchoice","change_cs","cost",
+#                       "keep_one", "mulen_keep","mulen_release","trophy")
 coast_recoutput <- recoutput2 %>% 
   filter(state == 1)
 
@@ -247,8 +366,13 @@ results <- results %>%
 
 rbc2 <- rbctrack %>% 
   tibble() %>% 
+  select(1,2,4,15,9,10,11,12,18,22) %>% 
+  I()
+rbc2 <- rbctrack %>% 
+  tibble() %>% 
   select(1,2,4,15,9,10,11,12,18) %>% 
   I()
+#names(rbc2) <- c("isim","year","abc","fmsy","est_ofl","true_ofl","rhl","bmsy","msy","fem_ssb")
 names(rbc2) <- c("isim","year","abc","fmsy","est_ofl","true_ofl","rhl","bmsy","msy")
 rbc2 <- rbc2 %>% 
   mutate(year = 2019 + 2*year - 1) %>% 
@@ -256,6 +380,10 @@ rbc2 <- rbc2 %>%
 results <- results %>% 
   left_join(rbc2)
   #mutate(scenario = rep("coastwide 14",nrow(.)))
+
+# temp <- results %>% 
+#   filter(year!=2019) %>% 
+#   fill("abc","fmsy","est_ofl","true_ofl","rhl","bmsy","msy","fem_ssb")
 
 temp <- results %>% 
   filter(year!=2019) %>% 
@@ -281,28 +409,29 @@ res4 <- fout %>%
 results <- results %>% 
   left_join(res4)
 
-# res5 <- sexcatch %>% 
-#   tibble() %>% 
-#   #rowid_to_column(var = "isim") %>% 
-#   mutate(isim = rep(1:(nrow(.)/4),each=4)) %>% 
-#   rename(fleet = L) %>%
-#   select(isim,everything()) %>% 
-#   pivot_longer(cols= 3:ncol(.), names_to = "year", values_to = "prop_female") %>% 
-#   mutate(year = as.integer(year)) %>% 
-#   filter(fleet == 3) %>% 
-#   select(-fleet) %>% 
-#   # group_by(isim, year) %>% 
-#   # summarize(totcat_wt = sum(catch),
-#   #           prop_fem = sum(catch*(fleet==3)),
-#   #           release_wt = sum(catch*(fleet==4))) %>% 
-#   #pivot_wider(names_from = fleet, names_glue = "fleet_{fleet}", values_from = catch) %>% 
-#   I()
-# res5
-# results <- results %>% 
-#   left_join(res5)
+res5 <- sexcatch %>%
+  tibble() %>%
+  #rowid_to_column(var = "isim") %>%
+  mutate(isim = rep(1:(nrow(.)/4),each=4)) %>%
+  rename(fleet = L) %>%
+  select(isim,everything()) %>%
+  pivot_longer(cols= 3:ncol(.), names_to = "year", values_to = "prop_female") %>%
+  mutate(year = as.integer(year)) %>%
+  filter(fleet == 3) %>%
+  select(-fleet) %>%
+  # group_by(isim, year) %>%
+  # summarize(totcat_wt = sum(catch),
+  #           prop_fem = sum(catch*(fleet==3)),
+  #           release_wt = sum(catch*(fleet==4))) %>%
+  #pivot_wider(names_from = fleet, names_glue = "fleet_{fleet}", values_from = catch) %>%
+  I()
+res5
+results <- results %>%
+  left_join(res5)
 
 results <- results %>% 
   mutate(scenario = rep(scen.name,nrow(.)),
+         om = rep(om.name, nrow(.)),
          isim = isim + fsim -1)
 
 return(results)
@@ -316,13 +445,15 @@ diag_ts <- results %>%
   mutate(keep_to_rel = keep_num/release_num,
          change_cs = change_cs*-1,
          "kept per trip" = 1000*keep_num/ntrips,
+         "rel per trip" = 1000*release_num/ntrips,
          "F/Fref" = frate/fmsy,
          "B/Bref" = biomass/bmsy,
          "expense" = cost,
          cs_per_trip = change_cs/ntrips,
          rec_removals = keep_wt + release_wt,
          keep_one = keep_one/ntrips)  %>% 
-  select(scenario, isim, year, biomass, totcat_wt, rec_removals, keep_to_rel, "kept per trip", "F/Fref", "B/Bref",
+  select(om, scenario, isim, year, biomass, totcat_wt, rec_removals, keep_to_rel, "kept per trip", "rel per trip",
+         "F/Fref", "B/Bref",
          mulen_keep,
          mulen_release,
          trophy,
@@ -331,12 +462,13 @@ diag_ts <- results %>%
          ntrips,
          keep_one,
          cs_per_trip,
-         #prop_female
+         prop_female
          ) %>% 
   rename("spawning biomass" = biomass,
          "total catch" = totcat_wt,
          "kept:released" = keep_to_rel) %>% 
   pivot_longer(cols=c("spawning biomass","total catch","kept:released", "kept per trip", 
+                      "rel per trip",
                       "F/Fref", "B/Bref",
                       rec_removals,
                       mulen_keep,
@@ -347,7 +479,7 @@ diag_ts <- results %>%
                       ntrips,
                       keep_one,
                       cs_per_trip,
-                      #prop_female
+                      prop_female
                       ),names_to = "type", values_to = "value") %>% 
   I()
  return(diag_ts)
@@ -483,6 +615,7 @@ params <- list(
                  "MP 6",
                  "MP 7",
                  "MP 8"),
+  om.name = rep(2,7),
   fsim = rep(1,7))
 
 params <- list(
@@ -500,7 +633,32 @@ params <- list(
                  "MP 6",
                  "MP 7",
                  "MP 8"),
+  om.name = rep(3,7),
   fsim = rep(1,7))
+
+rootdir <- "~/Dropbox/fluke-mse/sims/2022-07-25/"
+omdirs <- rep(c("01-","02-","03-"),each=7)
+mpdirs <- rep(paste0("0",c(1:4,6:8)),3)
+scendirs <- paste0(rootdir, omdirs, mpdirs, "/")
+
+params <- list(
+  scendir = scendirs,
+  # scendir = c("~/Dropbox/fluke-mse/sims/2022-06-10/03-01/",
+  #             "~/Dropbox/fluke-mse/sims/2022-06-10/03-02/",
+  #             "~/Dropbox/fluke-mse/sims/2022-06-10/03-03/",
+  #             "~/Dropbox/fluke-mse/sims/2022-06-10/03-04/",
+  #             "~/Dropbox/fluke-mse/sims/2022-06-10/03-06/",
+  #             "~/Dropbox/fluke-mse/sims/2022-06-10/03-07/",
+  #             "~/Dropbox/fluke-mse/sims/2022-06-10/03-08/"),
+  scen.name = rep(c("MP 1",
+                "MP 2",
+                "MP 3",
+                "MP 4",
+                "MP 6",
+                "MP 7",
+                "MP 8"),3),
+  om.name = rep(1:3,each=7),
+  fsim = rep(1,21))
 
 #summarize the output files
 all_results <- purrr::pmap_dfr(params,read_results)
@@ -516,6 +674,8 @@ diag_ts <- get_diag_ts(all_results) %>%
 p1 <- diag_ts %>% 
   filter(year != 2019) %>% 
   mutate(type = fct_relevel(type,c("spawning biomass", "total catch"))) %>% 
+  filter(type %in% c("B/Bref","F/Fref"),
+         scenario %in% c("MP 1","MP 8")) %>% 
   projection.plot()
 
 # join ref pts & F
@@ -573,7 +733,7 @@ ggsave("boxplot-comparisons.png",p2,width=8,height=8)
 
 metrics <- diag_ts %>% 
   filter(year >= 2036) %>% 
-  group_by(scenario, type, isim) %>% 
+  group_by(om, scenario, type, isim) %>% 
   summarize(value = case_when(
     type == "F/Fref" ~ mean(value<1, na.rm=TRUE),
     type == "B/Bref" ~ mean(value>0.5, na.rm=TRUE),
@@ -610,7 +770,7 @@ ggsave("boxplot-metrics.png",p2,width=8,height=8)
 #ggsave("boxplot-metrics-om3-slides.png",p2,width=9,height=5)
 
 median_metrics <- metrics %>% 
-  group_by(mp, metric) %>% 
+  group_by(om, mp, metric) %>% 
   summarize(value = median(value, na.rm=TRUE))
 
 write_csv(median_metrics,file = "performance-metrics-median-over-sims.csv")
@@ -628,25 +788,38 @@ write_csv(minmax_metrics,file = "performance-metrics-minmax-of-medians.csv")
 
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
+  mutate(mp = fct_recode(mp,
+                   "status quo" = "MP 1",
+                   "minsize-1" = "MP 2", 
+                   "season" = "MP 3", 
+                   "region" = "MP 4",
+                   #"c1@14" = "MP 5", 
+                   "3@17" = "MP 6",
+                   "1@16-19" = "MP 7",
+                   "slot" = "MP 8")) %>% 
   #filter(!metric %in% c("change_cs", "cs_per_trip")) %>% 
-  filter(!metric %in% c("expense","cs_per_trip","total catch")) %>% 
-  do_radar_plot()
+  #filter(!metric %in% c("expense","cs_per_trip","total catch")) %>% 
+  filter(metric %in% c("change_cs", "kept per trip", "kept:released", "not overfished", "not overfishing",
+                       "keep_one")) %>% 
+  do_small_radar_plot()
 
 
 
 ### state information ###
 
 read_state_results <- function(scendir = "~/Dropbox/fluke-mse/07-01/",scen.name="mgmt_scenario_7",
+                               om.name = 1,
                          fsim = 1) {
 
 recoutput2 <- read.table(paste0(scendir, "recoutput2.out"), header = FALSE, skip = 1) #TRUE)
 nyrs <- length(unique(recoutput2[,2]))
 recoutput2[,1] <- rep(1:100, each = 10*nyrs)
-names(recoutput2) <- c("isim","year","state","ntrips","nchoice","change_cs","cost",
+names(recoutput2) <- c("isim","year","state","keep_num","rel_num","ntrips","nchoice","change_cs","cost",
                        "keep_one", "mulen_keep","mulen_release","trophy")
 state_recoutput <- recoutput2 %>% 
   mutate(scenario = rep(scen.name,nrow(.)),
-         isim = isim + fsim -1)
+         isim = isim + fsim -1,
+         om = rep(om.name,nrow(.)))
 
 return(state_recoutput)
 }
@@ -657,7 +830,8 @@ get_state_ts <- function(results) {
   diag_ts <- results %>% 
     mutate(#keep_to_rel = keep_num/release_num,
            change_cs = change_cs*-1,
-           #"kept per trip" = 1000*keep_num/ntrips,
+           "kept per trip" = 1000*keep_num/ntrips,
+           "rel per trip" = 1000*rel_num/ntrips,
            #"F/Fref" = frate/fmsy,
            #"B/Bref" = biomass/bmsy,
            "expense" = cost,
@@ -669,9 +843,10 @@ get_state_ts <- function(results) {
            #totcat_wt, 
            #rec_removals, 
            #keep_to_rel, 
-           #"kept per trip", #"F/Fref", "B/Bref",
-           mulen_keep,
-           mulen_release,
+           "kept per trip", #"F/Fref", "B/Bref",
+           "rel per trip", 
+           #mulen_keep,
+           #mulen_release,
            trophy,
            expense,
            change_cs,
@@ -685,7 +860,8 @@ get_state_ts <- function(results) {
     #        "total catch" = totcat_wt,
     #        "kept:released" = keep_to_rel) %>% 
     pivot_longer(cols=c(#"spawning biomass","total catch","kept:released", 
-                        #"kept per trip", 
+                        "kept per trip", 
+                        "rel per trip",
                         #"F/Fref", "B/Bref",
                         #rec_removals,
                         mulen_keep,
