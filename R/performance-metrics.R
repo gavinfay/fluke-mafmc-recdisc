@@ -267,21 +267,22 @@ read_results <- function(scendir = "~/Dropbox/fluke-mse/07-01/",scen.name="mgmt_
                          om.name = 1,
                          fsim = 1) {
   
- scendir <- "~/Dropbox/fluke-mse/sims/2022-07-25/01-01/"
- scen.name="MP 1"
- om.name = 1
- fsim = 1
+ # scendir <- "~/Dropbox/fluke-mse/sims/2022-07-25/01-01/"
+ # scen.name="MP 1"
+ # om.name = 1
+ # fsim = 1
+  print(scendir)
 
 spawbio <- read.table(paste0(scendir,"spawbio.out"), header = TRUE)
 totcatch <- read.table(paste0(scendir, "totcatch.out"), header = TRUE)
-sexcatch <- read.table(paste0(scendir, "sexcatch.out"), header = TRUE)
+if(om.name!=1) sexcatch <- read.table(paste0(scendir, "sexcatch.out"), header = TRUE)
 recoutput <- read.table(paste0(scendir, "recoutput.out"), header = FALSE, skip = 1) #TRUE)
 recoutput2 <- read.table(paste0(scendir, "recoutput2.out"), header = FALSE, skip = 1) #TRUE)
 rbctrack <- read.table(paste0(scendir, "rbctrack.out"), header = FALSE, skip = 1)
 fout <- read.table(paste0(scendir,"frate.out"), header = TRUE)
 names(spawbio) <- str_sub(names(spawbio), start=2)
 names(totcatch) <- str_sub(names(totcatch), start=2)
-names(sexcatch) <- str_sub(names(sexcatch), start=2)
+if(om.name!=1) names(sexcatch) <- str_sub(names(sexcatch), start=2)
 names(fout) <- str_sub(names(fout), start=2)
 results <- spawbio %>% 
   as_tibble() %>% 
@@ -345,10 +346,10 @@ nyrs <- length(unique(recoutput2[,2]))
 # recoutput2 <-  temp %>% 
 #   slice((1:(nsim*nyrs*10)))
 recoutput2[,1] <- rep(1:100, each = 10*nyrs)
- names(recoutput2) <- c("isim","year","state","n_keep","n_release","ntrips","nchoice","change_cs","cost",
-                        "keep_one", "mulen_keep","mulen_release","trophy")
-#names(recoutput2) <- c("isim","year","state","ntrips","nchoice","change_cs","cost",
-#                       "keep_one", "mulen_keep","mulen_release","trophy")
+# names(recoutput2) <- c("isim","year","state","n_keep","n_release","ntrips","nchoice","change_cs","cost",
+#                        "keep_one", "mulen_keep","mulen_release","trophy")
+names(recoutput2) <- c("isim","year","state","ntrips","nchoice","change_cs","cost",
+                       "keep_one", "mulen_keep","mulen_release","trophy")
 coast_recoutput <- recoutput2 %>% 
   filter(state == 1)
 
@@ -409,6 +410,7 @@ res4 <- fout %>%
 results <- results %>% 
   left_join(res4)
 
+if(om.name!=1)  {
 res5 <- sexcatch %>%
   tibble() %>%
   #rowid_to_column(var = "isim") %>%
@@ -425,9 +427,10 @@ res5 <- sexcatch %>%
   #           release_wt = sum(catch*(fleet==4))) %>%
   #pivot_wider(names_from = fleet, names_glue = "fleet_{fleet}", values_from = catch) %>%
   I()
-res5
+#res5
 results <- results %>%
   left_join(res5)
+}
 
 results <- results %>% 
   mutate(scenario = rep(scen.name,nrow(.)),
@@ -484,6 +487,37 @@ diag_ts <- results %>%
   I()
  return(diag_ts)
 }
+
+
+get_om1_sexcatch <- function(scendir, scen.name) {
+fsim=1
+sexcatch <- read.table(paste0(scendir, "sexcatch.out"), header = TRUE)
+names(sexcatch) <- str_sub(names(sexcatch), start=2)
+
+  res5 <- sexcatch %>%
+    tibble() %>%
+    #rowid_to_column(var = "isim") %>%
+    mutate(isim = rep(1:(nrow(.)/4),each=4)) %>%
+    rename(fleet = L) %>%
+    select(isim,everything()) %>%
+    pivot_longer(cols= 3:ncol(.), names_to = "year", values_to = "prop_female") %>%
+    mutate(year = as.integer(year)) %>%
+    filter(fleet == 3) %>%
+    select(-fleet) %>%
+    # group_by(isim, year) %>%
+    # summarize(totcat_wt = sum(catch),
+    #           prop_fem = sum(catch*(fleet==3)),
+    #           release_wt = sum(catch*(fleet==4))) %>%
+    #pivot_wider(names_from = fleet, names_glue = "fleet_{fleet}", values_from = catch) %>%
+    I()
+  #res5
+  
+  results <- res5 %>% 
+    mutate(scenario = rep(scen.name,nrow(.)),
+           om = rep(1, nrow(.)),
+           isim = isim + fsim -1)
+  return(results)
+  }
 
 
 #results <- read_results(scendir = "~/Dropbox/fluke-mse/07-01/",scen.name="mgmt_scenario_7")
@@ -660,8 +694,64 @@ params <- list(
   om.name = rep(1:3,each=7),
   fsim = rep(1,21))
 
+
+
+params <- list(
+  scendir = c("~/Dropbox/fluke-mse/sims/2022-05-24/01-01/",
+              "~/Dropbox/fluke-mse/sims/2022-05-24/01-02/",
+              "~/Dropbox/fluke-mse/sims/2022-05-24/01-03/",
+              "~/Dropbox/fluke-mse/sims/2022-05-24/01-04/",
+              "~/Dropbox/fluke-mse/sims/2022-05-24/01-06/",
+              "~/Dropbox/fluke-mse/sims/2022-05-24/01-07/",
+              "~/Dropbox/fluke-mse/sims/2022-05-24/01-08/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-01/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-02/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-03/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-04/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-06/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-07/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/02-08/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-01/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-02/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-03/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-04/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-06/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-07/",
+              "~/Dropbox/fluke-mse/sims/2022-06-10/03-08/"),
+  scen.name = rep(c("MP 1",
+                "MP 2",
+                "MP 3",
+                "MP 4",
+                "MP 6",
+                "MP 7",
+                "MP 8"),3),
+  om.name = rep(1:3, each = 7),
+  fsim = rep(1,21))
+
+
+param2 <- list(
+  scendir = c("~/Dropbox/fluke-mse/sims/2022-06-20/01-01/",
+              "~/Dropbox/fluke-mse/sims/2022-06-20/01-02/",
+              "~/Dropbox/fluke-mse/sims/2022-06-20/01-03/",
+              "~/Dropbox/fluke-mse/sims/2022-06-20/01-04/",
+              "~/Dropbox/fluke-mse/sims/2022-06-20/01-06/",
+              "~/Dropbox/fluke-mse/sims/2022-06-20/01-07/",
+              "~/Dropbox/fluke-mse/sims/2022-06-20/01-08/"),
+  scen.name = rep(c("MP 1",
+                    "MP 2",
+                    "MP 3",
+                    "MP 4",
+                    "MP 6",
+                    "MP 7",
+                    "MP 8"),1))
+
 #summarize the output files
 all_results <- purrr::pmap_dfr(params,read_results)
+
+#add prop female for om1
+om1_fem <- purrr::pmap_dfr(param2,get_om1_sexcatch) %>% 
+  pivot_longer(cols = c(prop_female), names_to = "type")
+  
 #generate time series of metrics
 diag_ts <- get_diag_ts(all_results) %>% 
   mutate(nurow = ifelse(type == "spawning biomass" & value == 0,0,1),
@@ -669,6 +759,9 @@ diag_ts <- get_diag_ts(all_results) %>%
   filter(nurow==1) %>% 
   select(-nurow)
   
+#join
+diag_ts <- diag_ts %>% bind_rows(om1_fem)
+
 
 # time series plots
 p1 <- diag_ts %>% 

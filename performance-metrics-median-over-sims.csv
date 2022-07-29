@@ -1,106 +1,358 @@
-mp,metric,value
-MP 1,change_cs,-42193500.64193387
-MP 1,cs_per_trip,-3.703063891028802
-MP 1,expense,470962691.77343416
-MP 1,keep_one,0.19275726598399567
-MP 1,kept per trip,0.2742959283793607
-MP 1,kept:released,0.1016500645516013
-MP 1,mulen_keep,19.829984758389493
-MP 1,mulen_release,13.695496836620196
-MP 1,ntrips,11219635.449349664
-MP 1,P(not overfished),1
-MP 1,P(not overfishing),1
-MP 1,rec_removals,6331.296
-MP 1,spawning biomass,67513.7005
-MP 1,total catch,15934.841499999999
-MP 1,trophy,0.017089769542281093
-MP 2,change_cs,-151938974.21291643
-MP 2,cs_per_trip,-12.89599400843241
-MP 2,expense,492358827.7473384
-MP 2,keep_one,0.2840074015972063
-MP 2,kept per trip,0.4711975422248928
-MP 2,kept:released,0.20744871067926318
-MP 2,mulen_keep,18.51208589665122
-MP 2,mulen_release,13.29638737219954
-MP 2,ntrips,11723959.48971355
-MP 2,P(not overfished),1
-MP 2,P(not overfishing),1
-MP 2,rec_removals,8156.8255
-MP 2,spawning biomass,60503.883
-MP 2,total catch,16468.3815
-MP 2,trophy,0.008342672492989936
-MP 3,change_cs,-45690457.42205597
-MP 3,cs_per_trip,-4.000692293078848
-MP 3,expense,474542267.9251311
-MP 3,keep_one,0.19664559660944914
-MP 3,kept per trip,0.27862848957842823
-MP 3,kept:released,0.10395866028488923
-MP 3,mulen_keep,19.838815515798068
-MP 3,mulen_release,13.682717881291325
-MP 3,ntrips,11308952.642933302
-MP 3,P(not overfished),1
-MP 3,P(not overfishing),1
-MP 3,rec_removals,6497.814
-MP 3,spawning biomass,67290.5975
-MP 3,total catch,15986.2425
-MP 3,trophy,0.017801483591562417
-MP 4,change_cs,-154365485.1431964
-MP 4,cs_per_trip,-13.10006301460631
-MP 4,expense,492660026.4132347
-MP 4,keep_one,0.2791875983997673
-MP 4,kept per trip,0.47845773262233393
-MP 4,kept:released,0.20172832987349004
-MP 4,mulen_keep,18.52954330524347
-MP 4,mulen_release,13.3070393926774
-MP 4,ntrips,11735069.92774692
-MP 4,P(not overfished),1
-MP 4,P(not overfishing),1
-MP 4,rec_removals,8337.497500000001
-MP 4,spawning biomass,59794.657999999996
-MP 4,total catch,16526.447
-MP 4,trophy,0.008087423706177488
-MP 6,change_cs,-162169402.6674571
-MP 6,cs_per_trip,-13.502467430800255
-MP 6,expense,495753534.12704605
-MP 6,keep_one,0.3009936102296833
-MP 6,kept per trip,0.5036916461597811
-MP 6,kept:released,0.24047185401497112
-MP 6,mulen_keep,18.31453047689859
-MP 6,mulen_release,13.156127558548754
-MP 6,ntrips,11821135.790613266
-MP 6,P(not overfished),1
-MP 6,P(not overfishing),0.9
-MP 6,rec_removals,8262.704
-MP 6,spawning biomass,59371.751000000004
-MP 6,total catch,16460.163
-MP 6,trophy,0.007164347922141415
-MP 7,change_cs,-171403158.1602487
-MP 7,cs_per_trip,-14.351526364424217
-MP 7,expense,499339963.82791257
-MP 7,keep_one,0.3500837060916704
-MP 7,kept per trip,0.4584661373198363
-MP 7,kept:released,0.1887798542605219
-MP 7,mulen_keep,18.000349266415476
-MP 7,mulen_release,13.44195682322481
-MP 7,ntrips,11906493.83375287
-MP 7,P(not overfished),1
-MP 7,P(not overfishing),1
-MP 7,rec_removals,7684.754
-MP 7,spawning biomass,61088.240999999995
-MP 7,total catch,16031.173999999999
-MP 7,trophy,0.008200562234938091
-MP 8,change_cs,-242202234.3528213
-MP 8,cs_per_trip,-19.8733872075276
-MP 8,expense,513041949.12283766
-MP 8,keep_one,0.3566048643513617
-MP 8,kept per trip,0.6417805602029175
-MP 8,kept:released,0.38951417151833434
-MP 8,mulen_keep,16.98611926137596
-MP 8,mulen_release,12.98694481336847
-MP 8,ntrips,12223675.619559415
-MP 8,P(not overfished),1
-MP 8,P(not overfishing),0.6
-MP 8,rec_removals,8085.419
-MP 8,spawning biomass,56554.4045
-MP 8,total catch,15833.8765
-MP 8,trophy,0
+om,mp,metric,value
+1,MP 1,change_cs,42193500.64193387
+1,MP 1,cs_per_trip,3.703063891028802
+1,MP 1,expense,470962691.77343416
+1,MP 1,keep_one,0.19275726598399567
+1,MP 1,kept per trip,0.2742959283793607
+1,MP 1,kept:released,0.1016500645516013
+1,MP 1,mulen_keep,19.829984758389493
+1,MP 1,mulen_release,13.695496836620196
+1,MP 1,not overfished,1
+1,MP 1,not overfishing,1
+1,MP 1,ntrips,11219635.449349664
+1,MP 1,prop_female,0.6760176
+1,MP 1,rec_removals,6331.296
+1,MP 1,rel per trip,2.904177702106608
+1,MP 1,spawning biomass,67513.7005
+1,MP 1,total catch,15934.841499999999
+1,MP 1,trophy,0.017089769542281093
+1,MP 2,change_cs,151938974.21291643
+1,MP 2,cs_per_trip,12.89599400843241
+1,MP 2,expense,492358827.7473384
+1,MP 2,keep_one,0.2840074015972063
+1,MP 2,kept per trip,0.4711975422248928
+1,MP 2,kept:released,0.20744871067926318
+1,MP 2,mulen_keep,18.51208589665122
+1,MP 2,mulen_release,13.29638737219954
+1,MP 2,not overfished,1
+1,MP 2,not overfishing,1
+1,MP 2,ntrips,11723959.48971355
+1,MP 2,prop_female,0.60724822
+1,MP 2,rec_removals,8156.8255
+1,MP 2,rel per trip,2.4469749572575688
+1,MP 2,spawning biomass,60503.883
+1,MP 2,total catch,16468.3815
+1,MP 2,trophy,0.008342672492989936
+1,MP 3,change_cs,45690457.42205597
+1,MP 3,cs_per_trip,4.000692293078848
+1,MP 3,expense,474542267.9251311
+1,MP 3,keep_one,0.19664559660944914
+1,MP 3,kept per trip,0.27862848957842823
+1,MP 3,kept:released,0.10395866028488923
+1,MP 3,mulen_keep,19.838815515798068
+1,MP 3,mulen_release,13.682717881291325
+1,MP 3,not overfished,1
+1,MP 3,not overfishing,1
+1,MP 3,ntrips,11308952.642933302
+1,MP 3,prop_female,0.67670085
+1,MP 3,rec_removals,6497.814
+1,MP 3,rel per trip,2.8929704453142766
+1,MP 3,spawning biomass,67290.5975
+1,MP 3,total catch,15986.2425
+1,MP 3,trophy,0.017801483591562417
+1,MP 4,change_cs,154365485.1431964
+1,MP 4,cs_per_trip,13.10006301460631
+1,MP 4,expense,492660026.4132347
+1,MP 4,keep_one,0.2791875983997673
+1,MP 4,kept per trip,0.47845773262233393
+1,MP 4,kept:released,0.20172832987349004
+1,MP 4,mulen_keep,18.52954330524347
+1,MP 4,mulen_release,13.3070393926774
+1,MP 4,not overfished,1
+1,MP 4,not overfishing,1
+1,MP 4,ntrips,11735069.92774692
+1,MP 4,prop_female,0.60753815
+1,MP 4,rec_removals,8337.497500000001
+1,MP 4,rel per trip,2.554196952405193
+1,MP 4,spawning biomass,59794.657999999996
+1,MP 4,total catch,16526.447
+1,MP 4,trophy,0.008087423706177488
+1,MP 6,change_cs,162169402.6674571
+1,MP 6,cs_per_trip,13.502467430800255
+1,MP 6,expense,495753534.12704605
+1,MP 6,keep_one,0.3009936102296833
+1,MP 6,kept per trip,0.5036916461597811
+1,MP 6,kept:released,0.24047185401497112
+1,MP 6,mulen_keep,18.31453047689859
+1,MP 6,mulen_release,13.156127558548754
+1,MP 6,not overfished,1
+1,MP 6,not overfishing,0.9
+1,MP 6,ntrips,11821135.790613266
+1,MP 6,prop_female,0.59134276
+1,MP 6,rec_removals,8262.704
+1,MP 6,rel per trip,2.293226848913351
+1,MP 6,spawning biomass,59371.751000000004
+1,MP 6,total catch,16460.163
+1,MP 6,trophy,0.007164347922141415
+1,MP 7,change_cs,171403158.1602487
+1,MP 7,cs_per_trip,14.351526364424217
+1,MP 7,expense,499339963.82791257
+1,MP 7,keep_one,0.3500837060916704
+1,MP 7,kept per trip,0.4584661373198363
+1,MP 7,kept:released,0.1887798542605219
+1,MP 7,mulen_keep,18.000349266415476
+1,MP 7,mulen_release,13.44195682322481
+1,MP 7,not overfished,1
+1,MP 7,not overfishing,1
+1,MP 7,ntrips,11906493.83375287
+1,MP 7,prop_female,0.60165907
+1,MP 7,rec_removals,7684.754
+1,MP 7,rel per trip,2.582936445455431
+1,MP 7,spawning biomass,61088.240999999995
+1,MP 7,total catch,16031.173999999999
+1,MP 7,trophy,0.008200562234938091
+1,MP 8,change_cs,242202234.3528213
+1,MP 8,cs_per_trip,19.8733872075276
+1,MP 8,expense,513041949.12283766
+1,MP 8,keep_one,0.3566048643513617
+1,MP 8,kept per trip,0.6417805602029175
+1,MP 8,kept:released,0.38951417151833434
+1,MP 8,mulen_keep,16.98611926137596
+1,MP 8,mulen_release,12.98694481336847
+1,MP 8,not overfished,1
+1,MP 8,not overfishing,0.6
+1,MP 8,ntrips,12223675.619559415
+1,MP 8,prop_female,0.49010166
+1,MP 8,rec_removals,8085.419
+1,MP 8,rel per trip,1.8396356727706809
+1,MP 8,spawning biomass,56554.4045
+1,MP 8,total catch,15833.8765
+1,MP 8,trophy,0
+2,MP 1,change_cs,29451259.761441007
+2,MP 1,cs_per_trip,3.011334000085036
+2,MP 1,expense,402482699.6101506
+2,MP 1,keep_one,0.18517724767981952
+2,MP 1,kept per trip,0.26084286547213786
+2,MP 1,kept:released,0.09736046096606515
+2,MP 1,mulen_keep,19.815487454156195
+2,MP 1,mulen_release,13.697402665423844
+2,MP 1,not overfished,1
+2,MP 1,not overfishing,1
+2,MP 1,ntrips,9588698.963847376
+2,MP 1,prop_female,0.673852755
+2,MP 1,rec_removals,5181.237499999999
+2,MP 1,rel per trip,2.885947270199398
+2,MP 1,spawning biomass,46397.172
+2,MP 1,total catch,11730.6125
+2,MP 1,trophy,0.015894803963229027
+2,MP 2,change_cs,119974183.26204482
+2,MP 2,cs_per_trip,11.86020854671693
+2,MP 2,expense,419828165.47958434
+2,MP 2,keep_one,0.27320040149962127
+2,MP 2,kept per trip,0.44608530965587534
+2,MP 2,kept:released,0.19734693481427001
+2,MP 2,mulen_keep,18.48522901898002
+2,MP 2,mulen_release,13.29488018255871
+2,MP 2,not overfished,1
+2,MP 2,not overfishing,0.9
+2,MP 2,ntrips,10001113.675483191
+2,MP 2,prop_female,0.60569216
+2,MP 2,rec_removals,6584.9765
+2,MP 2,rel per trip,2.4363161824612183
+2,MP 2,spawning biomass,40979.088
+2,MP 2,total catch,12099.622
+2,MP 2,trophy,0.007409792610457323
+2,MP 3,change_cs,32137392.496378094
+2,MP 3,cs_per_trip,3.2314645901376586
+2,MP 3,expense,405315195.10728395
+2,MP 3,keep_one,0.18961718817920875
+2,MP 3,kept per trip,0.2636040156119528
+2,MP 3,kept:released,0.09987429528334794
+2,MP 3,mulen_keep,19.82875726268015
+2,MP 3,mulen_release,13.686293807714549
+2,MP 3,not overfished,1
+2,MP 3,not overfishing,1
+2,MP 3,ntrips,9650470.149282174
+2,MP 3,prop_female,0.675702555
+2,MP 3,rec_removals,5290.7725
+2,MP 3,rel per trip,2.8641956268450817
+2,MP 3,spawning biomass,46128.0775
+2,MP 3,total catch,11718.573
+2,MP 3,trophy,0.01593645052044076
+2,MP 4,change_cs,120674518.63147712
+2,MP 4,cs_per_trip,11.900461495507614
+2,MP 4,expense,420141274.1302006
+2,MP 4,keep_one,0.26868024673357704
+2,MP 4,kept per trip,0.4539472567276073
+2,MP 4,kept:released,0.19162660116001104
+2,MP 4,mulen_keep,18.504486665583123
+2,MP 4,mulen_release,13.305210369646446
+2,MP 4,not overfished,1
+2,MP 4,not overfishing,0.8500000000000001
+2,MP 4,ntrips,10010164.407998016
+2,MP 4,prop_female,0.604998615
+2,MP 4,rec_removals,6739.011
+2,MP 4,rel per trip,2.5204675316057843
+2,MP 4,spawning biomass,40360.1825
+2,MP 4,total catch,12104.4205
+2,MP 4,trophy,0.007103355234320421
+2,MP 6,change_cs,126847603.95582485
+2,MP 6,cs_per_trip,12.443088541682611
+2,MP 6,expense,422248221.6757457
+2,MP 6,keep_one,0.29132960419959164
+2,MP 6,kept per trip,0.4807196748037368
+2,MP 6,kept:released,0.23214780245186395
+2,MP 6,mulen_keep,18.285282699666165
+2,MP 6,mulen_release,13.156951959858766
+2,MP 6,not overfished,1
+2,MP 6,not overfishing,0.25
+2,MP 6,ntrips,10075818.353346575
+2,MP 6,prop_female,0.591335555
+2,MP 6,rec_removals,6756.011
+2,MP 6,rel per trip,2.275060589542341
+2,MP 6,spawning biomass,39977.1365
+2,MP 6,total catch,12093.486
+2,MP 6,trophy,0.006099720285581287
+2,MP 7,change_cs,136537449.36874425
+2,MP 7,cs_per_trip,13.48953902770642
+2,MP 7,expense,424034554.8043608
+2,MP 7,keep_one,0.3436080810292871
+2,MP 7,kept per trip,0.4423241597196256
+2,MP 7,kept:released,0.18585704285825014
+2,MP 7,mulen_keep,17.94349154255752
+2,MP 7,mulen_release,13.42307481019009
+2,MP 7,not overfished,1
+2,MP 7,not overfishing,1
+2,MP 7,ntrips,10114348.14992451
+2,MP 7,prop_female,0.5995315649999999
+2,MP 7,rec_removals,6219.3405
+2,MP 7,rel per trip,2.5501777848503124
+2,MP 7,spawning biomass,40978.8315
+2,MP 7,total catch,11778.8355
+2,MP 7,trophy,0.007134972688547736
+2,MP 8,change_cs,196612554.08059397
+2,MP 8,cs_per_trip,18.667205132777095
+2,MP 8,expense,437317580.34412694
+2,MP 8,keep_one,0.3473993703759227
+2,MP 8,kept per trip,0.6160812971108124
+2,MP 8,kept:released,0.37631306977650403
+2,MP 8,mulen_keep,16.968399399435995
+2,MP 8,mulen_release,12.96029726303404
+2,MP 8,not overfished,1
+2,MP 8,not overfishing,0
+2,MP 8,ntrips,10417705.277274381
+2,MP 8,prop_female,0.495417025
+2,MP 8,rec_removals,6590.77
+2,MP 8,rel per trip,1.8337121295463685
+2,MP 8,spawning biomass,36963.5255
+2,MP 8,total catch,11766.887999999999
+2,MP 8,trophy,0
+3,MP 1,change_cs,-29309656.579328816
+3,MP 1,cs_per_trip,-2.7973626163726233
+3,MP 1,expense,459148614.6668526
+3,MP 1,keep_one,0.14356141762456082
+3,MP 1,kept per trip,0.18444995855831148
+3,MP 1,kept:released,0.10259762311450302
+3,MP 1,mulen_keep,20.05968057351835
+3,MP 1,mulen_release,13.809472261922444
+3,MP 1,not overfished,1
+3,MP 1,not overfishing,1
+3,MP 1,ntrips,10950394.684742864
+3,MP 1,prop_female,0.68696396
+3,MP 1,rec_removals,4281.4315
+3,MP 1,rel per trip,1.8948213459385164
+3,MP 1,spawning biomass,50261.495
+3,MP 1,total catch,11391.753499999999
+3,MP 1,trophy,0.020297250103992998
+3,MP 2,change_cs,51855201.42429882
+3,MP 2,cs_per_trip,4.46980094152241
+3,MP 2,expense,474320841.23446953
+3,MP 2,keep_one,0.22168429772161546
+3,MP 2,kept per trip,0.3312896457405917
+3,MP 2,kept:released,0.20868210562589637
+3,MP 2,mulen_keep,18.667776650430348
+3,MP 2,mulen_release,13.41103860652596
+3,MP 2,not overfished,1
+3,MP 2,not overfishing,1
+3,MP 2,ntrips,11303717.873011451
+3,MP 2,prop_female,0.61186024
+3,MP 2,rec_removals,5634.1075
+3,MP 2,rel per trip,1.6617725272339268
+3,MP 2,spawning biomass,45197.147
+3,MP 2,total catch,11784.116
+3,MP 2,trophy,0.00926743780479398
+3,MP 3,change_cs,-28558672.609399844
+3,MP 3,cs_per_trip,-2.637275219531527
+3,MP 3,expense,459437755.4036514
+3,MP 3,keep_one,0.14788508386410054
+3,MP 3,kept per trip,0.1918205099159553
+3,MP 3,kept:released,0.10555897593934416
+3,MP 3,mulen_keep,20.0550606630753
+3,MP 3,mulen_release,13.794920125425524
+3,MP 3,not overfished,1
+3,MP 3,not overfishing,1
+3,MP 3,ntrips,10954335.542253766
+3,MP 3,prop_female,0.687540035
+3,MP 3,rec_removals,4431.344
+3,MP 3,rel per trip,1.894224143597498
+3,MP 3,spawning biomass,50103.649
+3,MP 3,total catch,11445.0075
+3,MP 3,trophy,0.0200473836261107
+3,MP 4,change_cs,52817449.13895714
+3,MP 4,cs_per_trip,4.579278138897183
+3,MP 4,expense,475798463.58524835
+3,MP 4,keep_one,0.21865260710197074
+3,MP 4,kept per trip,0.32755849970813544
+3,MP 4,kept:released,0.20030612343670168
+3,MP 4,mulen_keep,18.731951328590156
+3,MP 4,mulen_release,13.426344772806583
+3,MP 4,not overfished,1
+3,MP 4,not overfishing,1
+3,MP 4,ntrips,11341183.46144932
+3,MP 4,prop_female,0.6131982899999999
+3,MP 4,rec_removals,5651.166
+3,MP 4,rel per trip,1.684888002659648
+3,MP 4,spawning biomass,45112.015
+3,MP 4,total catch,11799.198
+3,MP 4,trophy,0.009439677611334692
+3,MP 6,change_cs,62461867.192381114
+3,MP 6,cs_per_trip,5.410383370372363
+3,MP 6,expense,478740937.52281153
+3,MP 6,keep_one,0.24174362912236938
+3,MP 6,kept per trip,0.36983785638041217
+3,MP 6,kept:released,0.2532828828192232
+3,MP 6,mulen_keep,18.388794473792593
+3,MP 6,mulen_release,13.232214409257331
+3,MP 6,not overfished,1
+3,MP 6,not overfishing,1
+3,MP 6,ntrips,11427186.992898826
+3,MP 6,prop_female,0.593594975
+3,MP 6,rec_removals,5870.499
+3,MP 6,rel per trip,1.5391776643493293
+3,MP 6,spawning biomass,43888.252
+3,MP 6,total catch,11916.6005
+3,MP 6,trophy,0.007548710956329156
+3,MP 7,change_cs,88692856.2832256
+3,MP 7,cs_per_trip,7.635919655072345
+3,MP 7,expense,483250609.5944469
+3,MP 7,keep_one,0.292243267675235
+3,MP 7,kept per trip,0.36403840993694087
+3,MP 7,kept:released,0.23285291577964626
+3,MP 7,mulen_keep,17.92236390939697
+3,MP 7,mulen_release,13.441943921852776
+3,MP 7,not overfished,1
+3,MP 7,not overfishing,1
+3,MP 7,ntrips,11535157.872341871
+3,MP 7,prop_female,0.593229005
+3,MP 7,rec_removals,5606.7845
+3,MP 7,rel per trip,1.6230938329529363
+3,MP 7,spawning biomass,44324.516
+3,MP 7,total catch,11688.512999999999
+3,MP 7,trophy,0.0075935334889713
+3,MP 8,change_cs,129210367.41115806
+3,MP 8,cs_per_trip,11.057642477008166
+3,MP 8,expense,491149927.37966704
+3,MP 8,keep_one,0.2968964420216199
+3,MP 8,kept per trip,0.48814886496416665
+3,MP 8,kept:released,0.4110273750347422
+3,MP 8,mulen_keep,17.000091232978075
+3,MP 8,mulen_release,13.097822150557025
+3,MP 8,not overfished,1
+3,MP 8,not overfishing,0.8
+3,MP 8,ntrips,11715717.895060325
+3,MP 8,prop_female,0.48956268999999997
+3,MP 8,rec_removals,5838.809499999999
+3,MP 8,rel per trip,1.2870175740285648
+3,MP 8,spawning biomass,41288.8725
+3,MP 8,total catch,11461.0025
+3,MP 8,trophy,0

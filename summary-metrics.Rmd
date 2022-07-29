@@ -6,7 +6,8 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE,
+                      warning = FALSE)
 library(tidyverse)
 library(ggdist)
 library(scales)
@@ -14,14 +15,13 @@ library(fmsb)
 ```
 
 #### Read in the results objects
-
 These were created with the `performance-metrics.R` script.
 
 ```{r}
-metrics <- readRDS("all_results_distrib.rds")
-median_metrics <- readRDS("all_results_medians.rds")
-#metrics <- readRDS("metrics.rds")
-#median_metrics <- readRDS("median_metrics.rds")
+#metrics <- readRDS("all_results_distrib.rds")
+#median_metrics <- readRDS("all_results_medians.rds")
+metrics <- readRDS("metrics.rds")
+median_metrics <- readRDS("median_metrics.rds")
 state_metrics <- readRDS("full_state_metrics.rds")
 #metrics
 #median_metrics
@@ -178,12 +178,12 @@ state_medians <- state_metrics %>%
 ```
 
 
-- calculate the relative metrics comparing medians
+<!-- - calculate the relative metrics comparing medians -->
 
 ```{r}
 median_metrics <- median_metrics %>% 
   ungroup() %>% 
-  select(-isim) %>% 
+  #select(-isim) %>% 
   bind_rows(nu_state_medians) %>% 
   I()
 
@@ -201,7 +201,7 @@ nu_medians <- median_metrics %>%
   mutate(rel_value = value/mp1_val) %>% 
   I()
 ```
-- calculate the relative metrics 
+<!-- - calculate the relative metrics  -->
 
 ```{r}
 mp1_metrics <- metrics %>% 
@@ -218,10 +218,10 @@ nu_metrics <- metrics %>%
   I()
 ```
 
-- proportion outperforming mp1
+<!-- - proportion outperforming mp1 -->
 
 
-- create table of all final summary metrics
+<!-- - create table of all final summary metrics -->
 
 ```{r}
 summary_metrics <- nu_medians %>% 
@@ -244,13 +244,14 @@ summary_rel_metrics <- nu_medians %>%
                        "kept:released",
                        "kept:rel_range",
                        "spawning biomass",
-                       #relative # of releases per trip compared to mp1
+                       "rel per trip",
                        "rec_removals",
                        "ntrips"
                        #sales/income/GDP compared to mp1
                        )) %>% 
   mutate(metric = case_when(
     metric == "kept per trip" ~ "kept_per_trip_mp1",
+    metric == "rel per trip" ~ "rel_per_trip_mp1",
     metric == "keep_one" ~ "keep_one_mp1",
     metric == "kept:released" ~ "kept:rel_mp1",
     metric == "spawning biomass" ~ "ssb_mp1",
@@ -269,7 +270,7 @@ summary_metrics <- summary_metrics %>%
 
 ```
 
-- create table of all final metrics
+<!-- - create table of all final metrics -->
 
 ```{r}
 metrics <- nu_metrics %>% 
@@ -292,13 +293,14 @@ rel_metrics <- nu_metrics %>%
                        "kept:released",
                        "kept:rel_range",
                        "spawning biomass",
-                       #relative # of releases per trip compared to mp1
+                       "rel per trip",
                        "rec_removals",
                        "ntrips"
                        #sales/income/GDP compared to mp1
                        )) %>% 
   mutate(metric = case_when(
     metric == "kept per trip" ~ "kept_per_trip_mp1",
+    metric == "rel per trip" ~ "rel_per_trip_mp1",
     metric == "keep_one" ~ "keep_one_mp1",
     metric == "kept:released" ~ "kept:rel_mp1",
     metric == "spawning biomass" ~ "ssb_mp1",
@@ -317,34 +319,34 @@ metrics <- metrics %>%
 
 ```
 
-### Metrics by OM & MP
+<!-- ### Metrics by OM & MP -->
 
-```{r}
-summary <- summary_metrics %>% 
-  mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
-  group_by(mp, metric) %>% 
-  mutate(val2 = value/max(value, na.rm=TRUE)) %>% 
-  # filter(!metric %in% c("total catch", "expense", "cs_per_trip",
-  #                       "mulen_keep",
-  #                       "mulen_release",
-  #                       "not overfished",
-  #                       "prop_female")) %>% 
-  ggplot() +
-  aes(x = metric, y = val2, col = om, group = mp) +
-  geom_point() +
-  coord_flip() +
-  facet_grid(~mp) +
-  geom_hline(yintercept = 0, lty=2, alpha =0.5) +
-  theme(legend.position = "bottom") +
-        #axis.text.y = element_blank()) +
-  guides(fill = guide_legend(nrow = 1))
-summary
+<!-- ```{r} -->
+<!-- summary <- summary_metrics %>%  -->
+<!--   mutate(om = factor(om), -->
+<!--          om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>%  -->
+<!--   group_by(mp, metric) %>%  -->
+<!--   mutate(val2 = value/max(value, na.rm=TRUE)) %>%  -->
+<!--   # filter(!metric %in% c("total catch", "expense", "cs_per_trip", -->
+<!--   #                       "mulen_keep", -->
+<!--   #                       "mulen_release", -->
+<!--   #                       "not overfished", -->
+<!--   #                       "prop_female")) %>%  -->
+<!--   ggplot() + -->
+<!--   aes(x = metric, y = val2, col = om, group = mp) + -->
+<!--   geom_point() + -->
+<!--   coord_flip() + -->
+<!--   facet_grid(~mp) + -->
+<!--   geom_hline(yintercept = 0, lty=2, alpha =0.5) + -->
+<!--   theme(legend.position = "bottom") + -->
+<!--         #axis.text.y = element_blank()) + -->
+<!--   guides(fill = guide_legend(nrow = 1)) -->
+<!-- summary -->
 
-```
+<!-- ``` -->
 
 
-### metrics across MPs for all oms
+### Performance metrics across management alternatives for all operating model scenarios
 ```{r}
 p2 <- summary_metrics %>% 
   mutate(om = factor(om),
@@ -508,7 +510,9 @@ p2 <- metrics2 %>%
 ggsave("outputs/plots/boxplot-metrics-om2-slides.png",p2,width=9,height=5)
 p2
 ```
+
 #### Tradeoffs among key metrics for the MRIP bias operating model scenario
+
 ```{r}
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
@@ -558,7 +562,9 @@ p2 <- metrics2 %>%
 ggsave("outputs/plots/boxplot-metrics-om3-slides.png",p2,width=9,height=5)
 p2
 ```
+
 #### Tradeoffs among key metrics for the distribution shift operating model scenario
+
 ```{r}
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
@@ -740,21 +746,21 @@ ggsave("outputs/plots/nstates_beat_mp1.png",nbeat_plot,width=9,height=5)
 ```
 
 
-```{r}
-mp1 <- state_metrics %>% 
-  filter(mp == "MP 1") %>% 
-  mutate(mp1_val = value) %>% 
-  select(metric, mp1_val, om, isim, state)
-  
-beat_mp1 <- state_metrics %>% 
-  filter(mp != "MP 1") %>% 
-  left_join(mp1) %>% 
-  mutate(beat_mp1 = ifelse(value > mp1_val, 1,0)) %>% 
-  group_by(om, mp, metric, state) %>% 
-  summarize(prop = mean(beat_mp1, na.rm=TRUE))
+<!-- ```{r} -->
+<!-- mp1 <- state_metrics %>%  -->
+<!--   filter(mp == "MP 1") %>%  -->
+<!--   mutate(mp1_val = value) %>%  -->
+<!--   select(metric, mp1_val, om, isim, state) -->
 
-beat_mp1
-  
-  
-```
+<!-- beat_mp1 <- state_metrics %>%  -->
+<!--   filter(mp != "MP 1") %>%  -->
+<!--   left_join(mp1) %>%  -->
+<!--   mutate(beat_mp1 = ifelse(value > mp1_val, 1,0)) %>%  -->
+<!--   group_by(om, mp, metric, state) %>%  -->
+<!--   summarize(prop = mean(beat_mp1, na.rm=TRUE)) -->
+
+<!-- beat_mp1 -->
+
+
+<!-- ``` -->
 
