@@ -1,8 +1,11 @@
 ---
 title: "Fluke MSE performance metrics"
-author: "Gavin Fay"
-date: "2022-07-25"
-output: html_document
+author: "Gavin Fay, Madeleine Guyant"
+date: "2022-12-23"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +25,9 @@ These were created with the `performance-metrics.R` script.
 #median_metrics <- readRDS("all_results_medians.rds")
 metrics <- readRDS("metrics.rds")
 median_metrics <- readRDS("median_metrics.rds")
-state_metrics <- readRDS("full_state_metrics.rds")
+state_metrics <- readRDS("full_state_metrics.rds") %>% 
+  mutate(state = fct_relevel(state,
+                             c("MA","RI","CT","NY","NJ","DE","MD","VA","NC")))
 #metrics
 #median_metrics
 #state_metrics
@@ -634,7 +639,7 @@ state_bp <- state_metrics %>%
   mutate(bp = list(do_state_bp(data)))
 ```
 
-#### State-by-state metrics for the Base Operating Model scenario {.tabset}
+### State-by-state metrics for the Base Operating Model scenario {.tabset}
 ```{r, results = 'asis', echo = FALSE}
 for (i in seq_along(state_bp$metric)){
   tmp <- state_bp$bp[[i]]
@@ -643,6 +648,8 @@ for (i in seq_along(state_bp$metric)){
   cat(" \n\n")
   }
 ```
+
+###
 
 ```{r}
 state_bp <- state_metrics %>% 
@@ -660,7 +667,7 @@ state_bp <- state_metrics %>%
   mutate(bp = list(do_state_bp(data)))
 ```
 
-#### State-by-state metrics for the MRIP Bias Operating Model scenario {.tabset}
+### State-by-state metrics for the MRIP Bias Operating Model scenario {.tabset}
 ```{r, results = 'asis', echo = FALSE}
 for (i in seq_along(state_bp$metric)){
   tmp <- state_bp$bp[[i]]
@@ -669,6 +676,8 @@ for (i in seq_along(state_bp$metric)){
   cat(" \n\n")
   }
 ```
+
+###
 
 ```{r}
 state_bp <- state_metrics %>% 
@@ -686,7 +695,7 @@ state_bp <- state_metrics %>%
   mutate(bp = list(do_state_bp(data)))
 ```
 
-#### State-by-state metrics for the Distribution Shift Operating Model scenario {.tabset}
+### State-by-state metrics for the Distribution Shift Operating Model scenario {.tabset}
 ```{r, results = 'asis', echo = FALSE}
 for (i in seq_along(state_bp$metric)){
   tmp <- state_bp$bp[[i]]
@@ -696,8 +705,9 @@ for (i in seq_along(state_bp$metric)){
   }
 ```
 
+###
 
-#### How many states do better than the status quo management alternative?
+### How many states do better than the status quo management alternative?
 ```{r}
 state_medians <- state_metrics %>% 
   group_by(om, mp, metric, state) %>% 
@@ -715,7 +725,7 @@ beat_mp1 <- state_medians %>%
   mutate(beat_mp1 = ifelse(value > mp1_val, 1,0)) %>% 
   group_by(om, mp, metric) %>% 
   summarize(nbeat = sum(beat_mp1, na.rm=TRUE))
-beat_mp1
+#beat_mp1
 
 ```
 
