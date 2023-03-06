@@ -1,7 +1,5 @@
 ---
-title: "Fluke MSE performance metrics"
-author: "Gavin Fay, Madeleine Guyant"
-date: "2022-12-23"
+title: "Summer Flounder MSE Performance Metrics"
 output: 
   html_document:
     toc: true
@@ -17,8 +15,19 @@ library(scales)
 library(fmsb)
 ```
 
-#### Read in the results objects
-These were created with the `performance-metrics.R` script.
+_Gavin Fay, Madeleine Guyant_   
+_(last updated: 2023-03-05)_  
+
+#### Summary description of the results
+
+Full description and interpretation of the results for the MSE can be found in the final report via the Council's [Recreational Summer Flounder MSE webpage]("https://www.mafmc.org/actions/summer-flounder-mse").  
+Operating Models: simulations were conducted for three operating models, a base-case ( __Base__), a __MRIP Bias__ scenario that conditioned the operating model assuming the MRIP estimates of recreational catch are biased high, and a distribution shift ( __Shift__) model that modeled a northward shift over time in the avaialbility of summer flounder to the recreational fishery.  
+The performance of seven __Management Procedures__ was evaluated, which differed in the regulations settings for the recreational fishery. A summary description of the Management Procedures, and the explanation of the notation used in the plots below can be found in [this table]("Management-Procedures-and-Metric-Descriptions.pdf").  
+Each Management Procedure was applied to each operating model and compared using 17 __Performance Metrics__ summarizing performance associated with four Management Objectives. 100 simulations were conducted for each combination of Operating Model and Management Procedure. Details of management objectives and the performance metrics, including the notation used in the plots below can be found in [this table]("Management-Procedures-and-Metric-Descriptions.pdf").  
+
+
+<!-- #### Read in the results objects -->
+<!-- These were created with the `performance-metrics.R` script. -->
 
 ```{r}
 #metrics <- readRDS("all_results_distrib.rds")
@@ -270,6 +279,7 @@ summary_rel_metrics <- nu_medians %>%
 
 summary_metrics <- summary_metrics %>%
   bind_rows(summary_rel_metrics) %>% 
+  filter(metric!="kept:rel_range_mp1") %>% 
   I()
 #summary_metrics
 
@@ -319,6 +329,7 @@ rel_metrics <- nu_metrics %>%
 
 metrics <- metrics %>%
   bind_rows(rel_metrics) %>% 
+  filter(metric!="kept:rel_range_mp1") %>% 
   I()
 #summary_metrics
 
@@ -355,15 +366,15 @@ metrics <- metrics %>%
 ```{r}
 p2 <- summary_metrics %>% 
   mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         om = fct_recode(om, "Base" = "1","MRIP Bias" = "2","Shift" = "3"),
          mp2 = fct_recode(mp,
                           "status quo" = "MP 1",
                           "minsize-1" = "MP 2", 
                           "season" = "MP 3", 
                           "region" = "MP 4",
                           #"c1@14" = "MP 5", 
-                          "c3@17" = "MP 6",
-                          "c1@16-19" = "MP 7",
+                          "3@17" = "MP 6",
+                          "1@16-19" = "MP 7",
                           "slot" = "MP 8"),
          metric = factor(metric, levels = c("keep_one",
                                             "kept_per_trip_mp1",
@@ -372,7 +383,7 @@ p2 <- summary_metrics %>%
                                             "keep_one_mp1",
                                             "keep_one_range_mp1",
                                             "kept:rel_mp1",
-                                            "kept:rel_range_mp1",
+                                            #"kept:rel_range_mp1",
                                             "not overfished",
                                             "not overfishing",
                                             "ssb_mp1",
@@ -410,15 +421,15 @@ p2
 ```{r}
 metrics2 <- metrics %>% 
   mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         om = fct_recode(om, "Base" = "1","MRIP Bias" = "2","Shift" = "3"),
          mp2 = fct_recode(mp,
                           "status quo" = "MP 1",
                           "minsize-1" = "MP 2", 
                           "season" = "MP 3", 
                           "region" = "MP 4",
                           #"c1@14" = "MP 5", 
-                          "c3@17" = "MP 6",
-                          "c1@16-19" = "MP 7",
+                          "3@17" = "MP 6",
+                          "1@16-19" = "MP 7",
                           "slot" = "MP 8"),
          metric = factor(metric, levels = c("keep_one",
                                             "kept_per_trip_mp1",
@@ -445,7 +456,7 @@ metrics2 <- metrics %>%
 ```{r}
 # add boxplots
 p2 <- metrics2 %>% 
-  filter(om == "base") %>% 
+  filter(om == "Base") %>% 
   ggplot() +
   aes(x = mp2, y = value, fill = mp2) +
   geom_boxplot(outlier.shape=NA) +
@@ -467,13 +478,13 @@ ggsave("outputs/plots/boxplot-metrics-om1-slides.png",p2,width=9,height=5)
 p2
 ```
 
-#### Tradeoffs among key metrics for the base operating model scenario
+#### Tradeoffs among key metrics for the Base operating model scenario
 ```{r}
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
   mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
-  filter(om == "base") %>% 
+         om = fct_recode(om, "Base" = "1","MRIP Bias" = "2","Shift" = "3")) %>% 
+  filter(om == "Base") %>% 
   mutate(mp = fct_recode(mp,
                    "status quo" = "MP 1",
                    "minsize-1" = "MP 2", 
@@ -490,11 +501,11 @@ p3 <- median_metrics %>%
 
 ```
 
-### MRIP bias Operating Model
+### MRIP Bias Operating Model
 ```{r}
 # add boxplots
 p2 <- metrics2 %>% 
-  filter(om == "MRIP bias") %>% 
+  filter(om == "MRIP Bias") %>% 
   ggplot() +
   aes(x = mp2, y = value, fill = mp2) +
   geom_boxplot(outlier.shape=NA) +
@@ -506,7 +517,7 @@ p2 <- metrics2 %>%
   theme(legend.position = "bottom",
         axis.text.x = element_blank()) +
   labs(fill = "",
-       subtitle = "MRIP bias scenario") +
+       subtitle = "MRIP Bias scenario") +
   guides(fill = guide_legend(nrow = 1))
 # add table summaries
 #ggsave("boxplot-metrics.png",p2,width=8,height=8)
@@ -522,8 +533,8 @@ p2
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
     mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
-  filter(om == "MRIP bias") %>% 
+         om = fct_recode(om, "Base" = "1","MRIP Bias" = "2","Shift" = "3")) %>% 
+  filter(om == "MRIP Bias") %>% 
   mutate(mp = fct_recode(mp,
                    "status quo" = "MP 1",
                    "minsize-1" = "MP 2", 
@@ -546,7 +557,7 @@ p3 <- median_metrics %>%
 ```{r}
 # add boxplots
 p2 <- metrics2 %>% 
-  filter(om == "shift") %>% 
+  filter(om == "Shift") %>% 
   ggplot() +
   aes(x = mp2, y = value, fill = mp2) +
   geom_boxplot(outlier.shape=NA) +
@@ -574,8 +585,8 @@ p2
 # radar chart - not sure how to save this to file automagically
 p3 <- median_metrics %>% 
     mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3")) %>% 
-  filter(om == "shift") %>% 
+         om = fct_recode(om, "Base" = "1","MRIP Bias" = "2","Shift" = "3")) %>% 
+  filter(om == "Shift") %>% 
   mutate(mp = fct_recode(mp,
                    "status quo" = "MP 1",
                    "minsize-1" = "MP 2", 
@@ -732,7 +743,7 @@ beat_mp1 <- state_medians %>%
 ```{r}
 nbeat_plot <- beat_mp1 %>% 
   mutate(om = factor(om),
-         om = fct_recode(om, "base" = "1","MRIP bias" = "2","shift" = "3"),
+         om = fct_recode(om, "Base" = "1","MRIP Bias" = "2","Shift" = "3"),
          mp = fct_expand(mp,"MP 1"),
          mp = fct_relevel(mp, "MP 1")) %>% 
   ggplot() +
